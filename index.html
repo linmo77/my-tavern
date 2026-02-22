@@ -4,91 +4,496 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>小酒馆</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=ZCOOL+QingKe+HuangYou&family=Long+Cang&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#1a1a2e;--chat-bg:#16213e;--user:#0f3460;--ai:#1a1a2e;--text:#e0e0e0;--accent:#e94560;--input:#0f3460}
+:root{--bg:#1a1a2e;--chat-bg:#16213e;--user:#0f3460;--ai:#1a1a2e;--text:#e0e0e0;--accent:#e94560;--input:#0f3460;--sidebar:#111827}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:16px;height:100vh;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto}
-.top-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--chat-bg);border-bottom:1px solid rgba(255,255,255,0.1)}
-.top-bar .title{font-size:18px;font-weight:bold}
-.btn-icon{background:none;border:none;font-size:22px;cursor:pointer}
+#app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto;position:relative}
+
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--chat-bg);border-bottom:1px solid rgba(255,255,255,0.1);z-index:10}
+.top-bar .title{font-size:17px;font-weight:bold;flex:1;text-align:center}
+.btn-icon{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px}
+.top-bar-left,.top-bar-right{display:flex;gap:4px}
+
 .chat-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
-.system-msg{text-align:center;color:#888;font-size:14px;padding:20px 0}
-.message{max-width:85%;padding:10px 14px;border-radius:16px;line-height:1.6;word-wrap:break-word;animation:fadeIn .3s ease}
+.system-msg{text-align:center;color:#888;font-size:13px;padding:16px 0}
+.message{max-width:85%;padding:10px 14px;border-radius:16px;line-height:1.6;word-wrap:break-word;animation:fadeIn .3s ease;white-space:pre-wrap}
 .message.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:4px}
 .message.assistant{align-self:flex-start;background:var(--ai);border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:4px}
-.role-tag{font-size:12px;color:var(--accent);margin-bottom:4px;display:block}
+.role-tag{font-size:11px;color:var(--accent);margin-bottom:4px;display:block}
+.char-name{color:#f0a500}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
 .input-bar{display:flex;gap:8px;padding:10px 16px;background:var(--chat-bg);border-top:1px solid rgba(255,255,255,0.1);align-items:flex-end}
 .input-bar textarea{flex:1;background:var(--input);border:none;border-radius:20px;padding:10px 16px;color:var(--text);font-size:16px;font-family:inherit;resize:none;max-height:120px;outline:none}
-.input-bar button{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:10px 20px;font-size:15px;cursor:pointer;white-space:nowrap}
+.input-bar button{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:10px 16px;font-size:14px;cursor:pointer;white-space:nowrap}
 .input-bar button:active{opacity:.8}
-.settings-panel{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;display:flex;justify-content:center;align-items:center}
-.settings-panel.hidden{display:none}
-.settings-content{background:var(--chat-bg);border-radius:16px;padding:24px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto}
-.settings-content h3{margin-bottom:16px;text-align:center}
-.settings-content label{display:block;margin-top:12px;margin-bottom:4px;font-size:14px;color:#aaa}
-.settings-content input,.settings-content select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:var(--bg);color:var(--text);font-size:15px;outline:none}
-.btn-save{width:100%;margin-top:20px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:16px;cursor:pointer}
-.btn-close{width:100%;margin-top:8px;padding:12px;background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.15);border-radius:10px;font-size:16px;cursor:pointer}
+
+/* 侧边栏 */
+.sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:50;display:none}
+.sidebar-overlay.show{display:block}
+.sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--sidebar);z-index:60;transition:left .3s ease;overflow-y:auto;padding:16px}
+.sidebar.show{left:0}
+.sidebar h3{margin-bottom:12px;font-size:16px;color:var(--accent)}
+.sidebar-section{margin-bottom:20px}
+.sidebar-section-title{font-size:13px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+
+/* 角色卡片 */
+.char-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.char-card:active,.char-card.active{border-color:var(--accent);background:rgba(233,69,96,0.1)}
+.char-card .char-card-name{font-size:15px;font-weight:bold;margin-bottom:4px}
+.char-card .char-card-desc{font-size:12px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.char-card-actions{display:flex;gap:8px;margin-top:6px}
+.char-card-actions button{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#aaa;cursor:pointer}
+.char-card-actions button:active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* 对话历史 */
+.history-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.history-item:active{border-color:var(--accent)}
+.history-item .history-title{font-size:14px;margin-bottom:2px}
+.history-item .history-time{font-size:11px;color:#666}
+.history-item-actions{display:flex;gap:6px;margin-top:4px}
+.history-item-actions button{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#aaa;cursor:pointer}
+
+.btn-new{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;margin-bottom:12px}
+.btn-new:active{opacity:.8}
+
+/* 弹窗 */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;display:flex;justify-content:center;align-items:center}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--chat-bg);border-radius:16px;padding:20px;width:90%;max-width:420px;max-height:85vh;overflow-y:auto}
+.modal h3{margin-bottom:16px;text-align:center;font-size:17px}
+.modal label{display:block;margin-top:10px;margin-bottom:4px;font-size:13px;color:#aaa}
+.modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit}
+.modal textarea{min-height:80px;resize:vertical}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.modal-btns button{flex:1;padding:10px;border-radius:10px;font-size:15px;cursor:pointer;border:none}
+.modal-btns .btn-primary{background:var(--accent);color:#fff}
+.modal-btns .btn-secondary{background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.15)}
+
+/* 主题 */
+body.theme-dark{--bg:#1a1a2e;--chat-bg:#16213e;--user:#0f3460;--ai:#1a1a2e;--text:#e0e0e0;--accent:#e94560;--input:#0f3460;--sidebar:#111827}
+body.theme-coffee{--bg:#1b1510;--chat-bg:#2a1f17;--user:#3d2b1f;--ai:#1b1510;--text:#d4c5a9;--accent:#c17f59;--input:#3d2b1f;--sidebar:#15100c}
+body.theme-forest{--bg:#0d1b0e;--chat-bg:#142016;--user:#1e3a20;--ai:#0d1b0e;--text:#b8d4b8;--accent:#4caf50;--input:#1e3a20;--sidebar:#091209}
+body.theme-ocean{--bg:#0a1628;--chat-bg:#0f2035;--user:#163050;--ai:#0a1628;--text:#b0cfe0;--accent:#2196f3;--input:#163050;--sidebar:#070f1c}
+body.theme-sakura{--bg:#1f1520;--chat-bg:#2a1d2e;--user:#3d2840;--ai:#1f1520;--text:#e0c8d8;--accent:#e91e8c;--input:#3d2840;--sidebar:#170f18}
+body.theme-light{--bg:#f5f5f5;--chat-bg:#ffffff;--user:#e3f2fd;--ai:#f5f5f5;--text:#333333;--accent:#e94560;--input:#e8e8e8;--sidebar:#ffffff}
+
 .typing-indicator span{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;margin:0 2px;animation:bounce 1.2s infinite}
 .typing-indicator span:nth-child(2){animation-delay:.2s}
 .typing-indicator span:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 </style>
 </head>
-<body>
+<body class="theme-dark">
 <div id="app">
 <header class="top-bar">
-<span class="title">🏮 小酒馆</span>
-<button class="btn-icon" onclick="toggleSettings()">⚙️</button>
+<div class="top-bar-left">
+<button class="btn-icon" onclick="toggleSidebar()">☰</button>
+</div>
+<span class="title" id="topTitle">🏮 小酒馆</span>
+<div class="top-bar-right">
+<button class="btn-icon" onclick="showModal('settings')">⚙️</button>
+</div>
 </header>
-<div id="settings-panel" class="settings-panel hidden">
-<div class="settings-content">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+<h3>🏮 小酒馆</h3>
+
+<div class="sidebar-section">
+<button class="btn-new" onclick="newChat()">＋ 新对话</button>
+</div>
+
+<div class="sidebar-section">
+<div class="sidebar-section-title">👤 角色卡片</div>
+<button class="btn-new" onclick="showModal('charEdit')" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:#aaa;margin-bottom:8px">＋ 创建角色</button>
+<div id="charList"></div>
+</div>
+
+<div class="sidebar-section">
+<div class="sidebar-section-title">💬 对话历史</div>
+<div id="historyList"></div>
+</div>
+</div>
+
+<main id="chatArea" class="chat-area">
+<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>
+</main>
+
+<footer class="input-bar">
+<textarea id="userInput" placeholder="说点什么..." rows="1" oninput="autoResize(this)"></textarea>
+<button onclick="sendMessage()">发送</button>
+</footer>
+</div>
+
+<!-- 设置弹窗 -->
+<div id="modal-settings" class="modal-overlay hidden">
+<div class="modal">
 <h3>⚙️ 设置</h3>
 <label>API 地址</label>
-<input type="text" id="apiUrl" placeholder="https://api.openai.com">
+<input type="text" id="apiUrl" placeholder="https://api.deepseek.com">
 <label>API 密钥</label>
 <input type="password" id="apiKey" placeholder="sk-...">
 <label>模型名称</label>
-<input type="text" id="model" placeholder="gpt-3.5-turbo">
+<input type="text" id="model" placeholder="deepseek-chat">
+<label>系统预设（System Prompt）</label>
+<textarea id="systemPrompt" placeholder="你是一个有趣的AI助手..."></textarea>
+<label>主题</label>
+<select id="themeSelect" onchange="changeTheme(this.value)">
+<option value="dark">🌙 深夜蓝</option>
+<option value="coffee">☕ 咖啡棕</option>
+<option value="forest">🌲 森林绿</option>
+<option value="ocean">🌊 海洋蓝</option>
+<option value="sakura">🌸 樱花粉</option>
+<option value="light">☀️ 亮色</option>
+</select>
 <label>聊天字体</label>
 <select id="fontSelect" onchange="changeFont(this.value)">
 <option value="system">系统默认</option>
 <option value="'Noto Serif SC',serif">思源宋体</option>
 <option value="'ZCOOL XiaoWei',serif">站酷小薇</option>
 <option value="'Ma Shan Zheng',cursive">马善政毛笔</option>
+<option value="'ZCOOL QingKe HuangYou',cursive">站酷庆科黄油</option>
+<option value="'Long Cang',cursive">龙藏体</option>
 </select>
 <label>字体大小</label>
 <input type="range" id="fontSize" min="14" max="24" value="16" oninput="changeFontSize(this.value)">
 <span id="fontSizeLabel">16px</span>
-<button class="btn-save" onclick="saveSettings()">保存设置</button>
-<button class="btn-close" onclick="toggleSettings()">关闭</button>
+<div class="modal-btns">
+<button class="btn-secondary" onclick="hideModal('settings')">关闭</button>
+<button class="btn-primary" onclick="saveSettings()">保存设置</button>
 </div>
 </div>
-<main id="chatArea" class="chat-area">
-<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>
-</main>
-<footer class="input-bar">
-<textarea id="userInput" placeholder="说点什么..." rows="1" oninput="autoResize(this)"></textarea>
-<button onclick="sendMessage()">发送</button>
-</footer>
 </div>
+
+<!-- 角色编辑弹窗 -->
+<div id="modal-charEdit" class="modal-overlay hidden">
+<div class="modal">
+<h3 id="charEditTitle">👤 创建角色</h3>
+<label>角色名称</label>
+<input type="text" id="charName" placeholder="例：小助手">
+<label>角色描述（简介）</label>
+<input type="text" id="charDesc" placeholder="一句话描述角色">
+<label>角色设定（System Prompt）</label>
+<textarea id="charPrompt" placeholder="你是xxx，性格xxx，说话风格xxx..."></textarea>
+<label>开场白（第一条消息）</label>
+<textarea id="charGreeting" placeholder="角色的第一句话..."></textarea>
+<input type="hidden" id="charEditId" value="">
+<div class="modal-btns">
+<button class="btn-secondary" onclick="hideModal('charEdit')">取消</button>
+<button class="btn-primary" onclick="saveChar()">保存角色</button>
+</div>
+</div>
+</div>
+
 <script>
-function loadSettings(){return{apiUrl:localStorage.getItem('apiUrl')||'',apiKey:localStorage.getItem('apiKey')||'',model:localStorage.getItem('model')||'gpt-3.5-turbo',font:localStorage.getItem('font')||'system',fontSize:localStorage.getItem('fontSize')||'16'}}
-function init(){var s=loadSettings();document.getElementById('apiUrl').value=s.apiUrl;document.getElementById('apiKey').value=s.apiKey;document.getElementById('model').value=s.model;document.getElementById('fontSelect').value=s.font;document.getElementById('fontSize').value=s.fontSize;document.getElementById('fontSizeLabel').textContent=s.fontSize+'px';if(s.font!=='system')changeFont(s.font);changeFontSize(s.fontSize)}
-function toggleSettings(){document.getElementById('settings-panel').classList.toggle('hidden')}
-function saveSettings(){localStorage.setItem('apiUrl',document.getElementById('apiUrl').value.trim());localStorage.setItem('apiKey',document.getElementById('apiKey').value.trim());localStorage.setItem('model',document.getElementById('model').value.trim());localStorage.setItem('font',document.getElementById('fontSelect').value);localStorage.setItem('fontSize',document.getElementById('fontSize').value);toggleSettings()}
-function changeFont(v){var c=document.getElementById('chatArea');c.style.fontFamily=v==='system'?'system-ui,-apple-system,sans-serif':v;localStorage.setItem('font',v)}
-function changeFontSize(s){document.getElementById('chatArea').style.fontSize=s+'px';document.getElementById('fontSizeLabel').textContent=s+'px'}
+var DB={
+  get:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set:function(k,v){localStorage.setItem(k,JSON.stringify(v))},
+  del:function(k){localStorage.removeItem(k)}
+};
+
+var state={
+  currentChatId:null,
+  currentCharId:null,
+  chars:DB.get('chars',[]),
+  chats:DB.get('chats',[]),
+  settings:DB.get('settings',{apiUrl:'',apiKey:'',model:'deepseek-chat',systemPrompt:'',theme:'dark',font:'system',fontSize:'16'})
+};
+
+function init(){
+  var s=state.settings;
+  document.getElementById('apiUrl').value=s.apiUrl||'';
+  document.getElementById('apiKey').value=s.apiKey||'';
+  document.getElementById('model').value=s.model||'deepseek-chat';
+  document.getElementById('systemPrompt').value=s.systemPrompt||'';
+  document.getElementById('themeSelect').value=s.theme||'dark';
+  document.getElementById('fontSelect').value=s.font||'system';
+  document.getElementById('fontSize').value=s.fontSize||'16';
+  document.getElementById('fontSizeLabel').textContent=(s.fontSize||'16')+'px';
+  changeTheme(s.theme||'dark');
+  if(s.font&&s.font!=='system')changeFont(s.font);
+  changeFontSize(s.fontSize||'16');
+  renderChars();
+  renderHistory();
+  if(state.chats.length>0){
+    loadChat(state.chats[0].id);
+  }
+}
+
+// 弹窗
+function showModal(name){document.getElementById('modal-'+name).classList.remove('hidden')}
+function hideModal(name){document.getElementById('modal-'+name).classList.add('hidden')}
+
+// 侧边栏
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('show');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+// 主题
+function changeTheme(t){
+  document.body.className='theme-'+t;
+  state.settings.theme=t;
+}
+
+// 字体
+function changeFont(v){
+  var c=document.getElementById('chatArea');
+  c.style.fontFamily=v==='system'?'system-ui,-apple-system,sans-serif':v;
+  state.settings.font=v;
+}
+function changeFontSize(s){
+  document.getElementById('chatArea').style.fontSize=s+'px';
+  document.getElementById('fontSizeLabel').textContent=s+'px';
+  state.settings.fontSize=s;
+}
+
+// 设置
+function saveSettings(){
+  state.settings.apiUrl=document.getElementById('apiUrl').value.trim();
+  state.settings.apiKey=document.getElementById('apiKey').value.trim();
+  state.settings.model=document.getElementById('model').value.trim();
+  state.settings.systemPrompt=document.getElementById('systemPrompt').value.trim();
+  state.settings.theme=document.getElementById('themeSelect').value;
+  state.settings.font=document.getElementById('fontSelect').value;
+  state.settings.fontSize=document.getElementById('fontSize').value;
+  DB.set('settings',state.settings);
+  hideModal('settings');
+}
+
+// 角色卡片
+function renderChars(){
+  var el=document.getElementById('charList');
+  el.innerHTML='';
+  state.chars.forEach(function(c){
+    var active=state.currentCharId===c.id?'active':'';
+    el.innerHTML+='<div class="char-card '+active+'" onclick="selectChar(\''+c.id+'\')">'+
+      '<div class="char-card-name">'+esc(c.name)+'</div>'+
+      '<div class="char-card-desc">'+esc(c.desc||'无描述')+'</div>'+
+      '<div class="char-card-actions">'+
+      '<button onclick="event.stopPropagation();editChar(\''+c.id+'\')">编辑</button>'+
+      '<button onclick="event.stopPropagation();deleteChar(\''+c.id+'\')">删除</button>'+
+      '</div></div>';
+  });
+}
+
+function saveChar(){
+  var id=document.getElementById('charEditId').value;
+  var c={
+    id:id||Date.now().toString(),
+    name:document.getElementById('charName').value.trim()||'未命名角色',
+    desc:document.getElementById('charDesc').value.trim(),
+    prompt:document.getElementById('charPrompt').value.trim(),
+    greeting:document.getElementById('charGreeting').value.trim()
+  };
+  if(id){
+    var idx=state.chars.findIndex(function(x){return x.id===id});
+    if(idx>=0)state.chars[idx]=c;
+  }else{
+    state.chars.push(c);
+  }
+  DB.set('chars',state.chars);
+  renderChars();
+  hideModal('charEdit');
+  document.getElementById('charEditId').value='';
+}
+
+function editChar(id){
+  var c=state.chars.find(function(x){return x.id===id});
+  if(!c)return;
+  document.getElementById('charEditTitle').textContent='✏️ 编辑角色';
+  document.getElementById('charEditId').value=c.id;
+  document.getElementById('charName').value=c.name;
+  document.getElementById('charDesc').value=c.desc||'';
+  document.getElementById('charPrompt').value=c.prompt||'';
+  document.getElementById('charGreeting').value=c.greeting||'';
+  showModal('charEdit');
+}
+
+function deleteChar(id){
+  if(!confirm('确定删除这个角色吗？'))return;
+  state.chars=state.chars.filter(function(x){return x.id!==id});
+  if(state.currentCharId===id)state.currentCharId=null;
+  DB.set('chars',state.chars);
+  renderChars();
+  updateTitle();
+}
+
+function selectChar(id){
+  state.currentCharId=state.currentCharId===id?null:id;
+  renderChars();
+  updateTitle();
+  toggleSidebar();
+  newChat();
+}
+
+// 对话历史
+function renderHistory(){
+  var el=document.getElementById('historyList');
+  el.innerHTML='';
+  state.chats.forEach(function(c){
+    var title=c.title||'新对话';
+    var time=new Date(c.updatedAt||c.createdAt).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'});
+    el.innerHTML+='<div class="history-item" onclick="loadChat(\''+c.id+'\')">'+
+      '<div class="history-title">'+esc(title)+'</div>'+
+      '<div class="history-time">'+time+'</div>'+
+      '<div class="history-item-actions">'+
+      '<button onclick="event.stopPropagation();deleteChat(\''+c.id+'\')">删除</button>'+
+      '</div></div>';
+  });
+}
+
+function newChat(){
+  var char=state.currentCharId?state.chars.find(function(x){return x.id===state.currentCharId}):null;
+  var chat={
+    id:Date.now().toString(),
+    charId:state.currentCharId,
+    title:char?char.name+' 的对话':'新对话',
+    messages:[],
+    createdAt:Date.now(),
+    updatedAt:Date.now()
+  };
+  if(char&&char.greeting){
+    chat.messages.push({role:'assistant',content:char.greeting});
+  }
+  state.chats.unshift(chat);
+  DB.set('chats',state.chats);
+  loadChat(chat.id);
+  renderHistory();
+  toggleSidebar();
+}
+
+function loadChat(id){
+  var chat=state.chats.find(function(x){return x.id===id});
+  if(!chat)return;
+  state.currentChatId=id;
+  if(chat.charId)state.currentCharId=chat.charId;
+  var area=document.getElementById('chatArea');
+  area.innerHTML='';
+  if(chat.messages.length===0){
+    area.innerHTML='<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>';
+  }else{
+    chat.messages.forEach(function(m){
+      appendMessageDOM(m.role,m.content);
+    });
+  }
+  updateTitle();
+  renderChars();
+}
+
+function deleteChat(id){
+  if(!confirm('确定删除这条对话吗？'))return;
+  state.chats=state.chats.filter(function(x){return x.id!==id});
+  DB.set('chats',state.chats);
+  if(state.currentChatId===id){
+    state.currentChatId=null;
+    document.getElementById('chatArea').innerHTML='<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>';
+  }
+  renderHistory();
+}
+
+function updateTitle(){
+  var char=state.currentCharId?state.chars.find(function(x){return x.id===state.currentCharId}):null;
+  document.getElementById('topTitle').textContent=char?'🏮 '+char.name:'🏮 小酒馆';
+}
+
+// 聊天
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
-function appendMessage(role,content){var c=document.getElementById('chatArea'),d=document.createElement('div');d.className='message '+role;var t=document.createElement('span');t.className='role-tag';t.textContent=role==='user'?'你':'🤖 AI';var p=document.createElement('div');p.textContent=content;d.appendChild(t);d.appendChild(p);c.appendChild(d);c.scrollTop=c.scrollHeight;return d}
-function showTyping(){var c=document.getElementById('chatArea'),d=document.createElement('div');d.className='message assistant';d.id='typing';d.innerHTML='<div class="typing-indicator"><span></span><span></span><span></span></div>';c.appendChild(d);c.scrollTop=c.scrollHeight}
+
+function appendMessageDOM(role,content){
+  var c=document.getElementById('chatArea');
+  var d=document.createElement('div');
+  d.className='message '+role;
+  var char=state.currentCharId?state.chars.find(function(x){return x.id===state.currentCharId}):null;
+  var t=document.createElement('span');
+  t.className='role-tag';
+  if(role==='user'){t.textContent='你'}
+  else{t.className='role-tag char-name';t.textContent=char?char.name:'🤖 AI'}
+  var p=document.createElement('div');
+  p.textContent=content;
+  d.appendChild(t);d.appendChild(p);c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+
+function showTyping(){
+  var c=document.getElementById('chatArea'),d=document.createElement('div');
+  d.className='message assistant';d.id='typing';
+  d.innerHTML='<div class="typing-indicator"><span></span><span></span><span></span></div>';
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
 function removeTyping(){var e=document.getElementById('typing');if(e)e.remove()}
-async function sendMessage(){var input=document.getElementById('userInput'),msg=input.value.trim();if(!msg)return;input.value='';input.style.height='auto';appendMessage('user',msg);var s=loadSettings();if(!s.apiUrl||!s.apiKey){appendMessage('assistant','请先点右上角 ⚙️ 设置 API 地址和密钥哦~');return}showTyping();try{var res=await fetch(s.apiUrl+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},body:JSON.stringify({model:s.model||'gpt-3.5-turbo',messages:[{role:'user',content:msg}],temperature:0.8})});var data=await res.json();removeTyping();appendMessage('assistant',data.choices&&data.choices[0]?data.choices[0].message.content:'回复出错了...')}catch(err){removeTyping();appendMessage('assistant','连接失败：'+err.message)}}
-document.addEventListener('keydown',function(e){if(e.target.id==='userInput'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
+
+function getCurrentChat(){
+  if(!state.currentChatId){newChat()}
+  return state.chats.find(function(x){return x.id===state.currentChatId});
+}
+
+async function sendMessage(){
+  var input=document.getElementById('userInput'),msg=input.value.trim();
+  if(!msg)return;
+  input.value='';input.style.height='auto';
+
+  var chat=getCurrentChat();
+  if(!chat)return;
+
+  chat.messages.push({role:'user',content:msg});
+  chat.updatedAt=Date.now();
+  if(chat.messages.length<=2)chat.title=msg.substring(0,20);
+  DB.set('chats',state.chats);
+  renderHistory();
+  appendMessageDOM('user',msg);
+
+  var s=state.settings;
+  if(!s.apiUrl||!s.apiKey){
+    var reply='请先点右上角 ⚙️ 设置 API 地址和密钥哦~';
+    chat.messages.push({role:'assistant',content:reply});
+    DB.set('chats',state.chats);
+    appendMessageDOM('assistant',reply);
+    return;
+  }
+
+  showTyping();
+
+  var messages=[];
+  var char=state.currentCharId?state.chars.find(function(x){return x.id===state.currentCharId}):null;
+  var sysPrompt=char&&char.prompt?char.prompt:s.systemPrompt;
+  if(sysPrompt)messages.push({role:'system',content:sysPrompt});
+  chat.messages.forEach(function(m){messages.push({role:m.role,content:m.content})});
+
+  try{
+    var res=await fetch(s.apiUrl+'/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},
+      body:JSON.stringify({model:s.model||'deepseek-chat',messages:messages,temperature:0.8})
+    });
+    var data=await res.json();
+    removeTyping();
+    var reply=data.choices&&data.choices[0]?data.choices[0].message.content:'回复出错了...';
+    chat.messages.push({role:'assistant',content:reply});
+    chat.updatedAt=Date.now();
+    DB.set('chats',state.chats);
+    renderHistory();
+    appendMessageDOM('assistant',reply);
+  }catch(err){
+    removeTyping();
+    var errMsg='连接失败：'+err.message;
+    chat.messages.push({role:'assistant',content:errMsg});
+    DB.set('chats',state.chats);
+    appendMessageDOM('assistant',errMsg);
+  }
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+document.addEventListener('keydown',function(e){
+  if(e.target.id==='userInput'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}
+});
+
 init();
 </script>
 </body>
