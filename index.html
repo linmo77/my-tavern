@@ -103,7 +103,10 @@ body.theme-light{--bg:#f5f5f5;--chat-bg:#fff;--user:#e3f2fd;--ai:#f5f5f5;--text:
 .typing-indicator span:nth-child(2){animation-delay:.2s}
 .typing-indicator span:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
-.streaming-cursor::after{content:'▌';animation:blink 1s infinite}
+.streaming-cursor::after{content:'▌';animation:blink 1s infinite}.msg-img{max-width:100%;border-radius:8px;margin:6px 0;cursor:pointer}
+.msg-img:active{opacity:.8}
+.img-fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.img-fullscreen img{max-width:95%;max-height:95%;object-fit:contain;border-radius:8px}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 </style>
 </head>
@@ -133,7 +136,12 @@ body.theme-light{--bg:#f5f5f5;--chat-bg:#fff;--user:#e3f2fd;--ai:#f5f5f5;--text:
 </div>
 <main id="chatArea" class="chat-area"><div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div></main>
 <footer class="input-bar">
+<button class="btn-icon" onclick="document.getElementById('imgInput').click()" style="font-size:22px;padding:6px">🖼️</button>
+<input type="file" id="imgInput" accept="image/*" style="display:none" onchange="previewImg(this)">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px">
+<div id="imgPreview" style="display:none"><img id="imgThumb" style="max-height:80px;border-radius:8px"><button onclick="clearImg()" style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;margin-left:4px;cursor:pointer">✕</button></div>
 <textarea id="userInput" placeholder="说点什么..." rows="1" oninput="autoResize(this)"></textarea>
+</div>
 <button onclick="sendMessage()">发送</button>
 </footer>
 </div>
@@ -280,8 +288,10 @@ tag.textContent=m.role==='user'?uname:(ch?ch.name:'文字 AI');
 var time=document.createElement('span');time.className='msg-time';time.textContent=m.ts?fmtTime(m.ts):'';
 header.appendChild(tag);header.appendChild(time);
 
-var content=document.createElement('div');content.className='msg-content';content.innerHTML=renderMd(m.content);
-
+var content=document.createElement('div');content.className='msg-content';
+if(m.image){var img=document.createElement('img');img.className='msg-img';img.src=m.image;img.onclick=function(){showFullImg(m.image)};content.appendChild(img)}
+content.innerHTML+=renderMd(m.content);
+                             
 msg.appendChild(header);msg.appendChild(content);wrap.appendChild(msg);
 
 // 消息操作按钮
@@ -333,7 +343,10 @@ var ctx=chatMsgs;
 if(s.contextSize>0&&ctx.length>s.contextSize)ctx=ctx.slice(-s.contextSize);
 
 // 插入作者注释
-var arr=ctx.map(function(m){return{role:m.role,content:m.content}});
+var arr=ctx.map(function(m){
+if(m.image){return{role:m.role,content:[{type:'text',text:m.content||'请看这张图片'},{type:'image_url',image_url:{url:m.image}}]}}
+return{role:m.role,content:m.content}
+});
 if(s.authorNote){var depth=Math.min(s.anDepth||4,arr.length);var pos=arr.length-depth;if(pos<0)pos=0;arr.splice(pos,0,{role:'system',content:'[作者注释：'+s.authorNote+']'})}
 
 messages=messages.concat(arr);
@@ -365,7 +378,10 @@ async function sendMessage(){var input=document.getElementById('userInput'),msg=
 
 var chat=getChat();if(!chat){newChat();chat=getChat()}if(!chat)return;
 
-chat.messages.push({role:'user',content:msg,ts:Date.now()});chat.updatedAt=Date.now();
+var msgObj={role:'user',content:msg,ts:Date.now()};
+if(pendingImg){msgObj.image=pendingImg}
+chat.messages.push(msgObj);
+clearImg();chat.updatedAt=Date.now();
 if(chat.messages.length<=2)chat.title=msg.substring(0,20);
 DB.set('chats',S.chats);renderHistory();appendMsgDOM(chat.messages[chat.messages.length-1],chat.messages.length-1);
 
@@ -385,6 +401,33 @@ var errMsg='连接失败：'+err.message;chat.messages.push({role:'assistant',co
 
 document.addEventListener('keydown',function(e){if(e.target.id==='userInput'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
 init();
-</script>
+var pendingImg=null;
+
+function previewImg(input){
+var file=input.files[0];if(!file)return;
+var reader=new FileReader();
+reader.onload=function(e){
+pendingImg=e.target.result;
+document.getElementById('imgThumb').src=pendingImg;
+document.getElementById('imgPreview').style.display='flex';
+document.getElementById('imgPreview').style.alignItems='center';
+};
+reader.readAsDataURL(file);
+input.value='';
+}
+
+function clearImg(){
+pendingImg=null;
+document.getElementById('imgPreview').style.display='none';
+document.getElementById('imgThumb').src='';
+}
+
+function showFullImg(src){
+var div=document.createElement('div');
+div.className='img-fullscreen';
+div.onclick=function(){div.remove()};
+div.innerHTML='<img src="'+src+'">';
+document.body.appendChild(div);
+}</script>
 </body>
 </html>
