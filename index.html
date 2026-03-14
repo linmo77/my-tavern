@@ -4,25 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>墨墨的专属工作站</title>
-    <!-- 引入霞鹜文楷字体 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-lite-webfont@1.1.0/style.css" />
+    <style>
+    :root {
+        --primary-color: #adcdea;
+        --bg-color: #ffffff;
+        --text-color: #333333;
+        --border-radius: 12px;
+    }
+    * {
+        box-sizing: border-box;
+        margin: 0; padding: 0;
+        font-family: 'LXGW WenKai Lite', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+        width: 100%; height: 100%; overflow: hidden;
+        background-color: var(--bg-color); color: var(--text-color);
+        transition: background-color 0.3s ease;
+    }
+    #bg-layer {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-size: cover; background-position: center;
+        z-index: -1; transition: opacity 0.3s ease;
+    }
+    #desktop { padding: 40px 20px; display: flex; flex-wrap: wrap; gap: 20px; }
+    .app-icon { display: flex; flex-direction: column; align-items: center; width: 70px; cursor: pointer; }
+    .icon-shape {
+        width: 60px; height: 60px;
+        background: linear-gradient(135deg, var(--primary-color), #cbe4e9);
+        border-radius: 16px; display: flex; justify-content: center; align-items: center;
+        color: white; font-size: 24px; font-weight: bold;
+        box-shadow: 0 4px 10px rgba(173, 205, 234, 0.4); margin-bottom: 8px;
+    }
+    .icon-name { font-size: 12px; color: var(--text-color); text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+    #floating-ball {
+        position: fixed; right: 20px; top: 60%; width: 50px; height: 50px;
+        background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 9999; cursor: pointer; transition: background 0.2s;
+    }
+    #floating-ball:active { background: rgba(173, 205, 234, 0.6); }
+    #control-panel {
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 75vh;
+        background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-top-left-radius: 20px; border-top-right-radius: 20px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 9998;
+        display: flex; flex-direction: column; transform: translateY(0); transition: transform 0.3s ease;
+    }
+    #control-panel.hidden { transform: translateY(100%); display: flex !important; }
+    .panel-header { display: flex; justify-content: space-between; padding: 15px 20px; font-weight: bold; border-bottom: 1px solid rgba(173, 205, 234, 0.3); }
+    .close-btn { color: var(--primary-color); cursor: pointer; }
+    .panel-content { padding: 20px; overflow-y: auto; flex: 1; }
+    .setting-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .setting-group label { font-size: 14px; color: #666; }
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+        width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: var(--border-radius); outline: none; font-size: 14px; background: transparent;
+    }
+    input:focus, textarea:focus { border-color: var(--primary-color); }
+    button { padding: 12px; border: none; border-radius: var(--border-radius); background: var(--primary-color); color: white; font-size: 15px; cursor: pointer; }
+    button:active { opacity: 0.8; }
+    #app-window { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; overflow: hidden; }
+    .app-page { width: 100%; height: 100%; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; padding-bottom: 80px; }
+    .page-title { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 30px; color: var(--primary-color); }
+    .main-btn { width: 100%; background: var(--primary-color); color: #fff; padding: 15px; border-radius: 25px; font-size: 16px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(173, 205, 234, 0.4); }
+    .text-btn { background: transparent; color: var(--primary-color); box-shadow: none; width: auto; padding: 10px 20px; }
+    .role-manage-section { margin-top: 20px; }
+    .section-title { font-size: 16px; color: #666; margin-bottom: 15px; }
+    .role-list { display: flex; flex-wrap: wrap; gap: 20px; }
+    .role-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .avatar-circle {
+        width: 65px; height: 65px; border-radius: 50%; border: 2px dashed var(--primary-color);
+        display: flex; justify-content: center; align-items: center; font-size: 28px; color: var(--primary-color);
+        background-size: cover; background-position: center; cursor: pointer;
+    }
+    .avatar-circle.has-img { border-style: solid; font-size: 0; }
+    .role-name-display { font-size: 12px; cursor: pointer; color: var(--text-color); }
+    .bottom-bar { position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px 20px; background: var(--bg-color); border-top: 1px solid rgba(0,0,0,0.05); }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; }
+    .radio-group { display: flex; gap: 20px; }
+    .radio-group label { display: flex; align-items: center; gap: 5px; font-size: 16px; }
+    input[type="radio"] { accent-color: var(--primary-color); width: 18px; height: 18px; }
+    .scroll-selector { margin-bottom: 20px; }
+    .scroll-selector label { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #666; }
+    .detail-hint { color: var(--primary-color); cursor: pointer; font-size: 12px; }
+    .scroll-options { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 5px; scrollbar-width: none; }
+    .scroll-options::-webkit-scrollbar { display: none; }
+    .option { padding: 8px 18px; border: 1px solid var(--primary-color); border-radius: 20px; white-space: nowrap; color: var(--primary-color); cursor: pointer; transition: all 0.2s; }
+    .option.active { background: var(--primary-color); color: #fff; }
+    textarea { height: 120px; resize: none; line-height: 1.5; }
+    #info-modal, #role-detail-modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4);
+        display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 20px;
+    }
+    .modal-box { background: var(--bg-color); width: 100%; max-width: 320px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .modal-box h3 { color: var(--primary-color); margin-bottom: 15px; text-align: center; }
+    .modal-box p, .detail-text { font-size: 14px; line-height: 1.6; color: var(--text-color); max-height: 60vh; overflow-y: auto; white-space: pre-wrap; }
+    .hidden { display: none !important; }
+    </style>
+
 </head>
 <body>
-    <!-- 背景层 -->
     <div id="bg-layer"></div>
-
-    <!-- 桌面：放置软件图标 -->
     <div id="desktop">
         <div class="app-icon" id="btn-open-app">
             <div class="icon-shape">角</div>
             <div class="icon-name">角色卡生成</div>
         </div>
     </div>
-
-    <!-- 苹果风格悬浮球 -->
     <div id="floating-ball"></div>
-
-    <!-- 悬浮球控制中心 (默认隐藏) -->
     <div id="control-panel" class="hidden">
         <div class="panel-header">
             <span>控制中心</span>
@@ -31,7 +123,7 @@
         <div class="panel-content">
             <div class="setting-group">
                 <label>API 接入 (中转站)</label>
-                <input type="text" id="api-url" placeholder="输入 API URL">
+                <input type="text" id="api-url" placeholder="输入 API URL (含 /v1/chat/completions)">
                 <input type="password" id="api-key" placeholder="输入 API Key">
                 <input type="text" id="api-model" placeholder="输入模型名称 (如 gpt-4)">
                 <button id="save-api-btn">保存配置</button>
@@ -45,59 +137,38 @@
             <div class="setting-group">
                 <label>字体设置</label>
                 <select id="font-select">
-                    <option value="LXGW WenKai Lite">霞鹜文楷 (开源)</option>
-                    <option value="SimSun">宋体</option>
-                    <option value="Custom">自定义字体</option>
+                    <option value="'LXGW WenKai Lite', sans-serif">霞鹜文楷 (开源)</option>
+                    <option value="SimSun, serif">宋体</option>
+                    <option value="Custom">自定义字体 (本地上传)</option>
                 </select>
-                <input type="file" id="font-upload" accept=".ttf" style="display:none;">
-                <button id="upload-font-btn">上传 TTF 字体</button>
+                <input type="file" id="font-upload" accept=".ttf,.otf" style="display:none;">
+                <button id="upload-font-btn">上传字体文件</button>
             </div>
             <div class="setting-group">
                 <label>背景设置</label>
                 <input type="file" id="bg-upload" accept="image/*" style="display:none;">
                 <button id="upload-bg-btn">上传背景图片</button>
-            </div>
-            <div class="setting-group">
-                <label>开发者工具</label>
-                <button id="open-notebook-btn">笔记本</button>
-                <button id="open-editor-btn">代码编辑器</button>
+                <button id="clear-bg-btn" class="text-btn" style="margin-top:5px;">清除背景</button>
             </div>
         </div>
     </div>
-
-    <!-- 角色卡生成 APP 窗口 (默认隐藏) -->
     <div id="app-window" class="hidden">
-        
-        <!-- 第一页：主页 -->
         <div id="page-1" class="app-page">
             <div class="page-title">角色卡生成</div>
             <button class="main-btn" id="btn-create-role">创建角色</button>
             <div class="role-manage-section">
                 <div class="section-title">管理角色</div>
-                <div id="role-list" class="role-list">
-                    <!-- 角色列表将通过 JS 动态生成 -->
-                </div>
+                <div id="role-list" class="role-list"></div>
             </div>
             <div class="bottom-bar">
                 <button class="text-btn" id="btn-exit-app">退出</button>
             </div>
         </div>
-
-        <!-- 第二页：基础信息 -->
         <div id="page-2" class="app-page hidden">
             <div class="page-title">基础资料</div>
-            <div class="form-group">
-                <label>名称</label>
-                <input type="text" id="role-name" placeholder="输入角色名称">
-            </div>
-            <div class="form-group">
-                <label>年龄</label>
-                <input type="number" id="role-age" placeholder="输入年龄">
-            </div>
-            <div class="form-group">
-                <label>身高 (cm)</label>
-                <input type="number" id="role-height" placeholder="输入身高">
-            </div>
+            <div class="form-group"><label>名称</label><input type="text" id="role-name" placeholder="输入角色名称"></div>
+            <div class="form-group"><label>年龄</label><input type="number" id="role-age" placeholder="输入年龄"></div>
+            <div class="form-group"><label>身高 (cm)</label><input type="number" id="role-height" placeholder="输入身高"></div>
             <div class="form-group">
                 <label>性别</label>
                 <div class="radio-group">
@@ -110,12 +181,9 @@
                 <button class="text-btn" id="btn-next-to-3">下一步</button>
             </div>
         </div>
-
-        <!-- 第三页：创建形象 (女性向) -->
         <div id="page-3" class="app-page hidden">
             <div class="page-title">详细形象</div>
             <textarea id="role-prompt" placeholder="AI将根据下方选项生成描述，您也可在此手动修改..."></textarea>
-            
             <div class="scroll-selector">
                 <label>眼型 <span class="detail-hint" onclick="showDetail('eye')">详情</span></label>
                 <div class="scroll-options" id="eye-options">
@@ -125,7 +193,6 @@
                     <div class="option" data-val="瑞凤眼">瑞凤眼</div>
                 </div>
             </div>
-
             <div class="scroll-selector">
                 <label>头发长度</label>
                 <div class="scroll-options" id="hair-options">
@@ -134,7 +201,6 @@
                     <div class="option" data-val="利落短发">利落短发</div>
                 </div>
             </div>
-
             <div class="scroll-selector">
                 <label>胸部丰满度</label>
                 <div class="scroll-options" id="breast-options">
@@ -143,7 +209,6 @@
                     <div class="option" data-val="波涛汹涌">波涛汹涌</div>
                 </div>
             </div>
-
             <div class="scroll-selector">
                 <label>私密体香 <span class="detail-hint" onclick="showDetail('scent')">详情</span></label>
                 <div class="scroll-options" id="scent-options">
@@ -152,31 +217,24 @@
                     <div class="option" data-val="冷冽玫瑰">冷冽玫瑰</div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>AI 生成字数</label>
                 <input type="number" id="ai-word-count" placeholder="例如：300" value="300">
             </div>
-
             <button class="main-btn" id="btn-generate-ai">AI 生成形象</button>
-
             <div class="bottom-bar flex-between">
                 <button class="text-btn" id="btn-prev-to-2">上一步</button>
                 <button class="text-btn" id="btn-final-confirm">最终确认</button>
             </div>
         </div>
     </div>
-
-    <!-- 详情弹窗 (用于显示眼型、体香详情等) -->
     <div id="info-modal" class="hidden">
         <div class="modal-box">
             <h3 id="info-title">详情</h3>
             <p id="info-content">内容</p>
-            <button class="main-btn" id="close-info-modal">我知道了</button>
+            <button class="main-btn" style="margin-top:20px;" id="close-info-modal">我知道了</button>
         </div>
     </div>
-
-    <!-- 角色详情弹窗 -->
     <div id="role-detail-modal" class="hidden">
         <div class="modal-box">
             <h3 id="detail-name">角色名</h3>
@@ -187,9 +245,217 @@
             </div>
         </div>
     </div>
-
-    <!-- 隐藏的头像上传控件 -->
     <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
 
+    <script>
+    const KEYS = { THEME: 'mm_theme', BG: 'mm_bg', FONT: 'mm_font', API: 'mm_api', ROLES: 'mm_roles' };
+    let currentDraft = { eye: '桃花眼', hair: '及腰长发', breast: '丰满挺拔', scent: '幽兰暗香' };
+    let currentUploadRoleId = null;
+    const detailDict = {
+        'eye': "【眼型魅力表现】\n桃花眼：眼波流转，似醉非醉，情动时眼尾泛红，勾人魂魄。\n狐狸眼：狭长魅惑，眼角上挑，透着狡黠与极致的诱惑。\n杏眼：圆润清澈，无辜纯欲，让人忍不住想要狠狠欺负。\n瑞凤眼：细长清秀，自带高冷气质，但在你面前却会化为一汪春水。",
+        'scent': "【私密体香表现】\n幽兰暗香：清冷高雅的幽香，随着体温升高逐渐浓郁，反差感极强。\n奶香蜜桃：甜腻娇软的奶香交织着成熟蜜桃的汁水气息，引人犯罪。\n冷冽玫瑰：带刺的冷香，但在最深处却藏着甜美馥郁的浓烈芬芳。"
+    };
+
+    window.onload = () => { loadTheme(); loadApi(); renderRoles(); };
+
+    function loadTheme() {
+        const theme = JSON.parse(localStorage.getItem(KEYS.THEME));
+        if (theme) {
+            document.documentElement.style.setProperty('--primary-color', theme.primary);
+            document.documentElement.style.setProperty('--bg-color', theme.bg);
+            document.getElementById('color-primary').value = theme.primary;
+            document.getElementById('color-bg').value = theme.bg;
+        }
+        const bg = localStorage.getItem(KEYS.BG);
+        if (bg) document.getElementById('bg-layer').style.backgroundImage = `url(${bg})`;
+        const font = localStorage.getItem(KEYS.FONT);
+        if (font) {
+            if (font.startsWith('data:')) {
+                const newStyle = document.createElement('style');
+                newStyle.appendChild(document.createTextNode(`@font-face { font-family: 'CustomFont'; src: url('${font}'); } * { font-family: 'CustomFont', sans-serif !important; }`));
+                document.head.appendChild(newStyle);
+                document.getElementById('font-select').value = 'Custom';
+            } else {
+                document.body.style.fontFamily = font;
+                document.getElementById('font-select').value = font;
+            }
+        }
+    }
+
+    function loadApi() {
+        const api = JSON.parse(localStorage.getItem(KEYS.API));
+        if (api) {
+            document.getElementById('api-url').value = api.url || '';
+            document.getElementById('api-key').value = api.key || '';
+            document.getElementById('api-model').value = api.model || '';
+        }
+    }
+
+    const ball = document.getElementById('floating-ball');
+    const panel = document.getElementById('control-panel');
+    let isDragging = false, startX, startY, initialX, initialY;
+    ball.addEventListener('touchstart', (e) => { isDragging = false; startX = e.touches[0].clientX; startY = e.touches[0].clientY; initialX = ball.offsetLeft; initialY = ball.offsetTop; });
+    ball.addEventListener('touchmove', (e) => { isDragging = true; e.preventDefault(); const currentX = e.touches[0].clientX - startX; const currentY = e.touches[0].clientY - startY; ball.style.left = `${initialX + currentX}px`; ball.style.top = `${initialY + currentY}px`; ball.style.right = 'auto'; });
+    ball.addEventListener('touchend', () => { if (!isDragging) panel.classList.remove('hidden'); });
+    document.getElementById('close-panel').addEventListener('click', () => panel.classList.add('hidden'));
+
+    document.getElementById('save-color-btn').addEventListener('click', () => {
+        const p = document.getElementById('color-primary').value || '#adcdea';
+        const b = document.getElementById('color-bg').value || '#ffffff';
+        document.documentElement.style.setProperty('--primary-color', p);
+        document.documentElement.style.setProperty('--bg-color', b);
+        localStorage.setItem(KEYS.THEME, JSON.stringify({ primary: p, bg: b }));
+        alert('主题颜色已为您保存，我的大小姐。');
+    });
+
+    document.getElementById('save-api-btn').addEventListener('click', () => {
+        const api = { url: document.getElementById('api-url').value, key: document.getElementById('api-key').value, model: document.getElementById('api-model').value };
+        localStorage.setItem(KEYS.API, JSON.stringify(api));
+        alert('API 配置已妥善保管。');
+    });
+
+    document.getElementById('upload-bg-btn').addEventListener('click', () => document.getElementById('bg-upload').click());
+    document.getElementById('bg-upload').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try { localStorage.setItem(KEYS.BG, e.target.result); document.getElementById('bg-layer').style.backgroundImage = `url(${e.target.result})`; } 
+                catch(err) { alert('图片太大了，手机浏览器存不下哦，换张小点的吧。'); }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    document.getElementById('clear-bg-btn').addEventListener('click', () => { localStorage.removeItem(KEYS.BG); document.getElementById('bg-layer').style.backgroundImage = 'none'; });
+
+    document.getElementById('font-select').addEventListener('change', function() {
+        if (this.value !== 'Custom') { document.body.style.fontFamily = this.value; localStorage.setItem(KEYS.FONT, this.value); }
+    });
+    document.getElementById('upload-font-btn').addEventListener('click', () => document.getElementById('font-upload').click());
+    document.getElementById('font-upload').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try { localStorage.setItem(KEYS.FONT, e.target.result); alert('字体上传成功！刷新页面即可完全应用。'); location.reload(); } 
+                catch(err) { alert('字体文件体积太大啦，建议使用小体积字体。'); }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    const appWindow = document.getElementById('app-window'), p1 = document.getElementById('page-1'), p2 = document.getElementById('page-2'), p3 = document.getElementById('page-3');
+    document.getElementById('btn-open-app').addEventListener('click', () => appWindow.classList.remove('hidden'));
+    document.getElementById('btn-exit-app').addEventListener('click', () => appWindow.classList.add('hidden'));
+
+    document.getElementById('btn-create-role').addEventListener('click', () => {
+        document.getElementById('role-name').value = ''; document.getElementById('role-age').value = ''; document.getElementById('role-height').value = ''; document.getElementById('role-prompt').value = '';
+        p1.classList.add('hidden'); p2.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-prev-to-1').addEventListener('click', () => { p2.classList.add('hidden'); p1.classList.remove('hidden'); });
+    document.getElementById('btn-next-to-3').addEventListener('click', () => {
+        currentDraft.name = document.getElementById('role-name').value || '未知';
+        currentDraft.age = document.getElementById('role-age').value || '18';
+        currentDraft.height = document.getElementById('role-height').value || '165';
+        currentDraft.gender = document.querySelector('input[name="role-gender"]:checked').value;
+        p2.classList.add('hidden'); p3.classList.remove('hidden');
+    });
+    document.getElementById('btn-prev-to-2').addEventListener('click', () => { p3.classList.add('hidden'); p2.classList.remove('hidden'); });
+
+    document.querySelectorAll('.scroll-options').forEach(group => {
+        group.addEventListener('click', (e) => {
+            if (e.target.classList.contains('option')) {
+                group.querySelectorAll('.option').forEach(opt => opt.classList.remove('active'));
+                e.target.classList.add('active');
+                const val = e.target.getAttribute('data-val');
+                if (group.id === 'eye-options') currentDraft.eye = val;
+                if (group.id === 'hair-options') currentDraft.hair = val;
+                if (group.id === 'breast-options') currentDraft.breast = val;
+                if (group.id === 'scent-options') currentDraft.scent = val;
+            }
+        });
+    });
+
+    window.showDetail = function(type) {
+        document.getElementById('info-title').innerText = type === 'eye' ? '眼型详情' : '体香详情';
+        document.getElementById('info-content').innerText = detailDict[type];
+        document.getElementById('info-modal').classList.remove('hidden');
+    };
+    document.getElementById('close-info-modal').addEventListener('click', () => document.getElementById('info-modal').classList.add('hidden'));
+
+    document.getElementById('btn-generate-ai').addEventListener('click', async () => {
+        const api = JSON.parse(localStorage.getItem(KEYS.API));
+        if (!api || !api.url || !api.key) return alert('笨蛋墨墨，你还没在悬浮球里配置API和Key呢！');
+        const wordCount = document.getElementById('ai-word-count').value || 300;
+        const promptBox = document.getElementById('role-prompt');
+        promptBox.value = "正在为您召唤 AI 生成形象，请稍候...";
+        const sysMsg = "你是一个擅长写绝美女性设定的文案大师。请不要使用任何表情符号(emoji)。";
+        const userMsg = `请生成一个角色的形象设定。名字:${currentDraft.name}，年龄:${currentDraft.age}，身高:${currentDraft.height}cm，性别:${currentDraft.gender}。特征：${currentDraft.eye}、${currentDraft.hair}、${currentDraft.breast}、体香是${currentDraft.scent}。请写一段约${wordCount}字的详细、具有唯美画面感且带有一丝诱惑力的描写。`;
+        try {
+            const res = await fetch(api.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                body: JSON.stringify({ model: api.model || "gpt-3.5-turbo", messages: [{ role: "system", content: sysMsg }, { role: "user", content: userMsg }] })
+            });
+            const data = await res.json();
+            if (data.choices && data.choices[0]) { currentDraft.desc = data.choices[0].message.content; promptBox.value = currentDraft.desc; } 
+            else { promptBox.value = "生成失败，请检查 API 配置是否正确。"; }
+        } catch (e) { promptBox.value = "网络错误或跨域拦截，请检查中转站地址。"; }
+    });
+
+    document.getElementById('btn-final-confirm').addEventListener('click', () => {
+        currentDraft.desc = document.getElementById('role-prompt').value;
+        const roles = JSON.parse(localStorage.getItem(KEYS.ROLES)) || [];
+        roles.push({ id: Date.now(), ...currentDraft, avatar: '' });
+        localStorage.setItem(KEYS.ROLES, JSON.stringify(roles));
+        p3.classList.add('hidden'); p1.classList.remove('hidden');
+        renderRoles();
+    });
+
+    function renderRoles() {
+        const roles = JSON.parse(localStorage.getItem(KEYS.ROLES)) || [];
+        const list = document.getElementById('role-list');
+        list.innerHTML = '';
+        roles.forEach(role => {
+            const item = document.createElement('div'); item.className = 'role-item';
+            const circle = document.createElement('div'); circle.className = role.avatar ? 'avatar-circle has-img' : 'avatar-circle';
+            circle.innerText = role.avatar ? '' : '+';
+            if (role.avatar) circle.style.backgroundImage = `url(${role.avatar})`;
+            circle.onclick = () => { currentUploadRoleId = role.id; document.getElementById('avatar-upload').click(); };
+            const nameSpan = document.createElement('div'); nameSpan.className = 'role-name-display'; nameSpan.innerText = role.name;
+            nameSpan.onclick = () => showRoleDetail(role);
+            item.appendChild(circle); item.appendChild(nameSpan); list.appendChild(item);
+        });
+    }
+
+    document.getElementById('avatar-upload').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file && currentUploadRoleId) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const roles = JSON.parse(localStorage.getItem(KEYS.ROLES)) || [];
+                const roleIndex = roles.findIndex(r => r.id === currentUploadRoleId);
+                if (roleIndex > -1) {
+                    roles[roleIndex].avatar = e.target.result;
+                    try { localStorage.setItem(KEYS.ROLES, JSON.stringify(roles)); renderRoles(); } 
+                    catch(err) { alert('头像图片太大啦，换张压缩过的吧！'); }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function showRoleDetail(role) {
+        document.getElementById('detail-name').innerText = role.name;
+        document.getElementById('detail-content').innerText = `【基础资料】\n姓名：${role.name}\n年龄：${role.age}\n身高：${role.height}cm\n性别：${role.gender}\n\n【形象特征】\n眼型：${role.eye}\n发型：${role.hair}\n胸部：${role.breast}\n体香：${role.scent}\n\n【详细描述】\n${role.desc || '暂无描述'}`;
+        document.getElementById('role-detail-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('close-role-detail').addEventListener('click', () => document.getElementById('role-detail-modal').classList.add('hidden'));
+    document.getElementById('copy-role-detail').addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById('detail-content').innerText).then(() => alert('已经一键复制到剪贴板啦，大小姐！'));
+    });
+    </script>
 </body>
 </html>
