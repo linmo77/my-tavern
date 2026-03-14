@@ -1,525 +1,195 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>小酒馆</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=ZCOOL+QingKe+HuangYou&family=Long+Cang&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#1a1a2e;--chat-bg:#16213e;--user:#0f3460;--ai:#1a1a2e;--text:#e0e0e0;--accent:#e94560;--input:#0f3460;--sidebar:#111827;--border:rgba(255,255,255,0.1);--hover:rgba(255,255,255,0.05)}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:16px;height:100dvh;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100dvh;max-width:600px;margin:0 auto;position:relative}
-.top-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--chat-bg);border-bottom:1px solid var(--border);z-index:10}
-.top-bar .title{font-size:16px;font-weight:bold;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-icon{background:none;border:none;font-size:18px;cursor:pointer;padding:6px;border-radius:8px;color:var(--text)}
-.btn-icon:active{background:var(--hover)}
-.top-bar-left,.top-bar-right{display:flex;gap:2px;align-items:center}
-.token-count{font-size:10px;color:#666}
-.chat-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
-.system-msg{text-align:center;color:#666;font-size:13px;padding:16px 0}
-.msg-wrap{display:flex;flex-direction:column;max-width:88%;animation:fadeIn .3s ease}
-.msg-wrap.user{align-self:flex-end}
-.msg-wrap.assistant{align-self:flex-start;max-width:100%;width:100%}
-.message{padding:10px 14px;border-radius:16px;line-height:1.7;word-wrap:break-word;white-space:pre-wrap}
-.msg-wrap.user .message{background:var(--user);border-bottom-right-radius:4px}
-.msg-wrap.assistant .message{background:var(--ai);border:1px solid var(--border);border-bottom-left-radius:4px;width:100%}
-.msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.role-tag{font-size:11px;font-weight:bold}
-.role-tag.user-tag{color:var(--accent)}
-.role-tag.char-tag{color:#f0a500}
-.msg-time{font-size:10px;color:#555}
-.msg-content strong{color:#f0a500}
-.msg-content em{color:#a8d8ea;font-style:italic}
-.msg-content code{background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;font-size:13px}
-.msg-content pre{background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;overflow-x:auto;margin:6px 0}
-.msg-content pre code{background:none;padding:0}
-.msg-actions{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
-.msg-actions button{font-size:11px;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-.msg-actions button:active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.swipe-nav{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:#666}
-.swipe-nav button{font-size:14px;padding:2px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.input-bar{display:flex;gap:6px;padding:8px 12px;background:var(--chat-bg);border-top:1px solid var(--border);align-items:flex-end}
-.input-bar textarea{flex:1;background:var(--input);border:none;border-radius:20px;padding:10px 14px;color:var(--text);font-size:15px;font-family:inherit;resize:none;max-height:120px;outline:none}
-.input-bar button{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:10px 14px;font-size:14px;cursor:pointer}
-.input-bar button:active{opacity:.8}
-.sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:50;display:none}
-.sidebar-overlay.show{display:block}
-.sidebar{position:fixed;top:0;left:-300px;width:300px;height:100%;background:var(--sidebar);z-index:60;transition:left .3s ease;overflow-y:auto;padding:14px}
-.sidebar.show{left:0}
-.sidebar h3{margin-bottom:10px;font-size:15px;color:var(--accent)}
-.sidebar-section{margin-bottom:16px}
-.sidebar-section-title{font-size:12px;color:#666;margin-bottom:6px;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
-.sidebar-section-title button{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-.char-card{background:var(--hover);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;cursor:pointer}
-.char-card.active{border-color:var(--accent);background:rgba(233,69,96,0.1)}
-.char-card-top{display:flex;align-items:center;gap:8px}
-.char-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.char-info{flex:1;overflow:hidden}
-.char-card-name{font-size:14px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.char-card-desc{font-size:11px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.char-card-actions{display:flex;gap:4px;margin-top:6px}
-.char-card-actions button{font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-.history-item{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:4px;cursor:pointer}
-.history-item.active{border-color:var(--accent)}
-.history-item .h-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.history-item .h-meta{font-size:10px;color:#555;display:flex;justify-content:space-between;margin-top:2px}
-.history-item .h-actions{display:flex;gap:4px;margin-top:4px}
-.history-item .h-actions button{font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-.btn-new{width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:8px}
-.btn-outline{width:100%;padding:8px;background:transparent;color:#aaa;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:6px}
-.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;display:flex;justify-content:center;align-items:flex-start;padding-top:5vh;overflow-y:auto}
-.modal-overlay.hidden{display:none}
-.modal{background:var(--chat-bg);border-radius:16px;padding:18px;width:92%;max-width:440px;max-height:90vh;overflow-y:auto;margin-bottom:5vh}
-.modal h3{margin-bottom:14px;text-align:center;font-size:16px}
-.modal label{display:block;margin-top:10px;margin-bottom:3px;font-size:12px;color:#888}
-.modal input,.modal select,.modal textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit}
-.modal textarea{min-height:70px;resize:vertical}
-.modal-btns{display:flex;gap:8px;margin-top:14px}
-.modal-btns button{flex:1;padding:10px;border-radius:10px;font-size:14px;cursor:pointer;border:none}
-.modal-btns .btn-primary{background:var(--accent);color:#fff}
-.modal-btns .btn-secondary{background:transparent;color:#aaa;border:1px solid var(--border)}
-.param-row{display:flex;align-items:center;gap:8px}
-.param-row input[type=range]{flex:1}
-.param-row .param-val{font-size:12px;color:#888;min-width:36px;text-align:right}
-.tab-bar{display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap}
-.tab-bar button{flex:1;padding:6px 4px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer;border-radius:8px 8px 0 0;min-width:50px}
-.tab-bar button.active{color:var(--accent);border-bottom:2px solid var(--accent)}
-.tab-content{display:none}
-.tab-content.active{display:block}
-.wb-item{background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px}
-.wb-item textarea{min-height:50px}
-.wb-actions{display:flex;gap:4px;margin-top:4px}
-.wb-actions button{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#888;cursor:pointer}
-body.theme-dark{--bg:#1a1a2e;--chat-bg:#16213e;--user:#0f3460;--ai:#1a1a2e;--text:#e0e0e0;--accent:#e94560;--input:#0f3460;--sidebar:#111827}
-body.theme-coffee{--bg:#1b1510;--chat-bg:#2a1f17;--user:#3d2b1f;--ai:#1b1510;--text:#d4c5a9;--accent:#c17f59;--input:#3d2b1f;--sidebar:#15100c}
-body.theme-forest{--bg:#0d1b0e;--chat-bg:#142016;--user:#1e3a20;--ai:#0d1b0e;--text:#b8d4b8;--accent:#4caf50;--input:#1e3a20;--sidebar:#091209}
-body.theme-ocean{--bg:#0a1628;--chat-bg:#0f2035;--user:#163050;--ai:#0a1628;--text:#b0cfe0;--accent:#2196f3;--input:#163050;--sidebar:#070f1c}
-body.theme-sakura{--bg:#1f1520;--chat-bg:#2a1d2e;--user:#3d2840;--ai:#1f1520;--text:#e0c8d8;--accent:#e91e8c;--input:#3d2840;--sidebar:#170f18}
-body.theme-midnight{--bg:#0f0f1a;--chat-bg:#161625;--user:#1e1e3a;--ai:#0f0f1a;--text:#c8c8e0;--accent:#7c4dff;--input:#1e1e3a;--sidebar:#0a0a14}
-body.theme-sunset{--bg:#1a1008;--chat-bg:#261a0e;--user:#3d2a15;--ai:#1a1008;--text:#e0d0b8;--accent:#ff6d00;--input:#3d2a15;--sidebar:#120b05}
-body.theme-light{--bg:#f5f5f5;--chat-bg:#fff;--user:#e3f2fd;--ai:#f5f5f5;--text:#333;--accent:#e94560;--input:#e8e8e8;--sidebar:#fff}
-.typing-indicator span{display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;margin:0 2px;animation:bounce 1.2s infinite}
-.typing-indicator span:nth-child(2){animation-delay:.2s}
-.typing-indicator span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
-.streaming-cursor::after{content:'▌';animation:blink 1s infinite}
-.msg-img{max-width:100%;border-radius:8px;margin:6px 0;cursor:pointer}
-.msg-img:active{opacity:.8}
-.img-fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.img-fullscreen img{max-width:95%;max-height:95%;object-fit:contain;border-radius:8px}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-
-/* 🌟 新增的正则管理器样式 */
-.regex-item { background: var(--hover); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
-.regex-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.regex-item-title { font-size: 14px; font-weight: bold; color: var(--accent); }
-.regex-actions { display: flex; gap: 4px; }
-.regex-actions button { font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: #888; cursor: pointer; }
-.regex-code { font-family: monospace; font-size: 10px; color: #888; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toggle-btn { padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid var(--border); background: transparent; color: #888; cursor: pointer; }
-.toggle-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>墨墨的专属工作站</title>
+    <!-- 引入霞鹜文楷字体 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-lite-webfont@1.1.0/style.css" />
 </head>
-<body class="theme-dark">
-<div id="app">
-<header class="top-bar">
-<div class="top-bar-left"><button class="btn-icon" onclick="toggleSidebar()">☰</button></div>
-<div style="flex:1;text-align:center"><span class="title" id="topTitle">🏮 小酒馆</span><div class="token-count" id="tokenCount"></div></div>
-<div class="top-bar-right"><button class="btn-icon" onclick="showModal('settings')">⚙️</button></div>
-</header>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-<div class="sidebar" id="sidebar">
-<h3>🏮 小酒馆</h3>
-<div class="sidebar-section"><button class="btn-new" onclick="newChat()">＋ 新对话</button></div>
-<div class="sidebar-section">
-<div class="sidebar-section-title">👤 角色卡片 <button onclick="showModal('charEdit');clearCharForm()">＋</button></div>
-<div style="display:flex;gap:4px;margin-bottom:6px">
-<button class="btn-outline" onclick="importChar()" style="width:50%;margin:0">📥 导入</button>
-<button class="btn-outline" onclick="exportAllChars()" style="width:50%;margin:0">📤 导出</button>
-</div>
-<div id="charList"></div>
-</div>
-<div class="sidebar-section">
-<div class="sidebar-section-title">💬 对话历史</div>
-<div id="historyList"></div>
-</div>
-</div>
-<main id="chatArea" class="chat-area"><div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div></main>
-<footer class="input-bar">
-<button class="btn-icon" onclick="document.getElementById('imgInput').click()" style="font-size:22px;padding:6px">🖼️</button>
-<input type="file" id="imgInput" accept="image/*" style="display:none" onchange="previewImg(this)">
-<div style="flex:1;display:flex;flex-direction:column;gap:4px">
-<div id="imgPreview" style="display:none"><img id="imgThumb" style="max-height:80px;border-radius:8px"><button onclick="clearImg()" style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;margin-left:4px;cursor:pointer">✕</button></div>
-<textarea id="userInput" placeholder="说点什么..." rows="1" oninput="autoResize(this)"></textarea>
-</div>
-<button onclick="sendMessage()">发送</button>
-</footer>
-</div>
+<body>
+    <!-- 背景层 -->
+    <div id="bg-layer"></div>
 
-<div id="modal-settings" class="modal-overlay hidden"><div class="modal">
-<h3>⚙️ 设置</h3>
-<div class="tab-bar">
-<button class="active" onclick="switchTab(this,'tab-api')">API</button>
-<button onclick="switchTab(this,'tab-params')">参数</button>
-<button onclick="switchTab(this,'tab-persona')">人设</button>
-<button onclick="switchTab(this,'tab-wb')">世界书</button>
-<button onclick="switchTab(this,'tab-theme')">外观</button>
-<button onclick="switchTab(this,'tab-regex')">正则</button> <!-- 🌟 新增正则按钮 -->
-</div>
-<div id="tab-api" class="tab-content active">
-<label>API 地址</label><input type="text" id="apiUrl" placeholder="https://api.deepseek.com">
-<label>API 密钥</label><input type="password" id="apiKey" placeholder="sk-...">
-<label>模型名称</label><input type="text" id="model" placeholder="deepseek-chat">
-<label>流式输出</label><select id="streamMode"><option value="1">开启</option><option value="0">关闭</option></select>
-</div>
-<div id="tab-params" class="tab-content">
-<label>Temperature</label><div class="param-row"><input type="range" id="temperature" min="0" max="2" step="0.1" value="0.8" oninput="this.nextElementSibling.textContent=this.value"><span class="param-val">0.8</span></div>
-<label>Top P</label><div class="param-row"><input type="range" id="topP" min="0" max="1" step="0.05" value="1" oninput="this.nextElementSibling.textContent=this.value"><span class="param-val">1</span></div>
-<label>Max Tokens（0=不限）</label><input type="number" id="maxTokens" value="0">
-<label>Frequency Penalty</label><div class="param-row"><input type="range" id="freqPen" min="0" max="2" step="0.1" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="param-val">0</span></div>
-<label>Presence Penalty</label><div class="param-row"><input type="range" id="presPen" min="0" max="2" step="0.1" value="0" oninput="this.nextElementSibling.textContent=this.value"><span class="param-val">0</span></div>
-<label>上下文消息数（0=全部）</label><input type="number" id="contextSize" value="0">
-<label>系统预设</label><textarea id="systemPrompt" placeholder="全局系统提示词..."></textarea>
-<label>作者注释</label><textarea id="authorNote" placeholder="插入到最近消息前，引导剧情..."></textarea>
-<label>注释插入深度</label><input type="number" id="anDepth" value="4" min="1">
-</div>
-<div id="tab-persona" class="tab-content">
-<label>你的名字</label><input type="text" id="userName" placeholder="默认：你">
-<label>你的人设</label><textarea id="userPersona" placeholder="你的角色设定..."></textarea>
-</div>
-<div id="tab-wb" class="tab-content">
-<button class="btn-new" onclick="addWB()">＋ 添加词条</button>
-<div id="wbList"></div>
-</div>
-<div id="tab-theme" class="tab-content">
-<label>主题</label><select id="themeSelect" onchange="changeTheme(this.value)">
-<option value="dark">🌙 深夜蓝</option><option value="coffee">☕ 咖啡棕</option><option value="forest">🌲 森林绿</option><option value="ocean">🌊 海洋蓝</option><option value="sakura">🌸 樱花粉</option><option value="midnight">🔮 午夜紫</option><option value="sunset">🌅 日落橙</option><option value="light">☀️ 亮色</option>
-</select>
-<label>字体</label><select id="fontSelect" onchange="changeFont(this.value)">
-<option value="system">系统默认</option><option value="'Noto Serif SC',serif">思源宋体</option><option value="'ZCOOL XiaoWei',serif">站酷小薇</option><option value="'Ma Shan Zheng',cursive">马善政毛笔</option><option value="'ZCOOL QingKe HuangYou',cursive">庆科黄油</option><option value="'Long Cang',cursive">龙藏体</option>
-</select>
-<label>字号</label><div class="param-row"><input type="range" id="fontSize" min="13" max="24" value="16" oninput="changeFontSize(this.value);this.nextElementSibling.textContent=this.value+'px'"><span class="param-val">16px</span></div>
-</div>
-
-<!-- 🌟 新增的正则面板内容 -->
-<div id="tab-regex" class="tab-content">
-  <div style="display:flex;gap:4px;margin-bottom:8px">
-    <button class="btn-new" onclick="addRegex()" style="margin:0">＋ 新建规则</button>
-    <button class="btn-outline" onclick="document.getElementById('regexImport').click()" style="margin:0;width:auto">📥 导入</button>
-    <button class="btn-outline" onclick="exportRegex()" style="margin:0;width:auto">📤 导出</button>
-  </div>
-  <input type="file" id="regexImport" accept=".json" style="display:none" onchange="importRegex(this)">
-  <div id="regexList"></div>
-</div>
-
-<div class="modal-btns"><button class="btn-secondary" onclick="hideModal('settings')">关闭</button><button class="btn-primary" onclick="saveSettings()">保存</button></div>
-</div></div>
-
-<div id="modal-charEdit" class="modal-overlay hidden"><div class="modal">
-<h3 id="charEditTitle">👤 创建角色</h3>
-<label>头像 emoji</label><input type="text" id="charAvatar" placeholder="🐱" maxlength="2">
-<label>名称</label><input type="text" id="charName" placeholder="角色名">
-<label>描述</label><input type="text" id="charDesc" placeholder="一句话描述">
-<label>角色设定</label><textarea id="charPrompt" placeholder="性格、说话风格等..."></textarea>
-<label>开场白</label><textarea id="charGreeting" placeholder="第一句话..."></textarea>
-<label>示例对话</label><textarea id="charExamples" placeholder="墨墨: 你好&#10;助手: 你好呀~"></textarea>
-<input type="hidden" id="charEditId" value="">
-<div class="modal-btns"><button class="btn-secondary" onclick="hideModal('charEdit')">取消</button><button class="btn-primary" onclick="saveChar()">保存</button></div>
-</div></div>
-
-<div id="modal-msgEdit" class="modal-overlay hidden"><div class="modal">
-<h3>✏️ 编辑消息</h3>
-<textarea id="msgEditContent" style="min-height:120px"></textarea>
-<input type="hidden" id="msgEditIdx">
-<div class="modal-btns"><button class="btn-secondary" onclick="hideModal('msgEdit')">取消</button><button class="btn-primary" onclick="saveMsgEdit()">保存</button></div>
-</div></div>
-
-<!-- 🌟 新增的正则编辑大弹窗 -->
-<div id="modal-regexEdit" class="modal-overlay hidden">
-  <div class="modal" style="max-width: 500px;">
-    <h3 id="regexEditTitle">✏️ 编辑正则规则</h3>
-    <label>规则名称</label>
-    <input type="text" id="regexName" placeholder="例如：雾隐空雪状态栏">
-    <label>查找正则 (Find Regex)</label>
-    <textarea id="regexFind" placeholder="填写正则表达式..." style="min-height:60px; font-family:monospace; font-size:12px;"></textarea>
-    <label>替换内容 (Replace With)</label>
-    <textarea id="regexReplace" placeholder="填写HTML代码..." style="min-height:200px; font-family:monospace; font-size:12px;"></textarea>
-    <input type="hidden" id="regexEditIdx">
-    <div class="modal-btns">
-      <button class="btn-secondary" onclick="hideModal('regexEdit')">取消</button>
-      <button class="btn-primary" onclick="saveRegex()">保存</button>
-    </div>
-  </div>
-</div>
-
-<input type="file" id="fileImport" accept=".json" style="display:none" onchange="handleImport(this)">
-<script>
-var DB={get:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set:function(k,v){localStorage.setItem(k,JSON.stringify(v))}};
-
-// 🌟 核心：加入了 regexRules
-var S={currentChatId:null,currentCharId:null,chars:DB.get('chars',[]),chats:DB.get('chats',[]),wb:DB.get('worldbook',[]),regexRules:DB.get('regexRules',[]),settings:DB.get('settings',{apiUrl:'',apiKey:'',model:'deepseek-chat',stream:true,temperature:0.8,topP:1,maxTokens:0,freqPen:0,presPen:0,contextSize:0,systemPrompt:'',authorNote:'',anDepth:4,userName:'',userPersona:'',theme:'dark',font:'system',fontSize:'16'})};
-
-/* ==========================================
-   ✨ 哥哥的专属正则引擎模块 ✨
-========================================== */
-function renderRegexList() {
-  var el = document.getElementById('regexList');
-  el.innerHTML = '';
-  S.regexRules.forEach(function(r, i) {
-    var isOn = r.enabled !== false;
-    el.innerHTML += `
-      <div class="regex-item">
-        <div class="regex-item-header">
-          <span class="regex-item-title">${esc(r.name || '未命名规则')}</span>
-          <div class="regex-actions">
-            <button class="toggle-btn ${isOn ? 'on' : ''}" onclick="toggleRegex(${i})">${isOn ? '已开启' : '已关闭'}</button>
-            <button onclick="editRegex(${i})">编辑</button>
-            <button onclick="deleteRegex(${i})">删除</button>
-          </div>
+    <!-- 桌面：放置软件图标 -->
+    <div id="desktop">
+        <div class="app-icon" id="btn-open-app">
+            <div class="icon-shape">角</div>
+            <div class="icon-name">角色卡生成</div>
         </div>
-        <div class="regex-code">${esc(r.find)}</div>
-      </div>
-    `;
-  });
-}
-function addRegex() {
-  document.getElementById('regexEditIdx').value = '';
-  document.getElementById('regexName').value = '';
-  document.getElementById('regexFind').value = '';
-  document.getElementById('regexReplace').value = '';
-  showModal('regexEdit');
-}
-function editRegex(i) {
-  var r = S.regexRules[i];
-  document.getElementById('regexEditIdx').value = i;
-  document.getElementById('regexName').value = r.name || '';
-  document.getElementById('regexFind').value = r.find || '';
-  document.getElementById('regexReplace').value = r.replace || '';
-  showModal('regexEdit');
-}
-function saveRegex() {
-  var idx = document.getElementById('regexEditIdx').value;
-  var rule = {
-    name: document.getElementById('regexName').value.trim(),
-    find: document.getElementById('regexFind').value.trim(),
-    replace: document.getElementById('regexReplace').value,
-    enabled: true
-  };
-  if(!rule.find) return alert('查找正则不能为空！');
-  if (idx !== '') { S.regexRules[parseInt(idx)] = rule; } 
-  else { S.regexRules.push(rule); }
-  DB.set('regexRules', S.regexRules);
-  renderRegexList();
-  hideModal('regexEdit');
-}
-function deleteRegex(i) {
-  if(!confirm('删除这条正则？')) return;
-  S.regexRules.splice(i, 1);
-  DB.set('regexRules', S.regexRules);
-  renderRegexList();
-}
-function toggleRegex(i) {
-  S.regexRules[i].enabled = S.regexRules[i].enabled === false ? true : false;
-  DB.set('regexRules', S.regexRules);
-  renderRegexList();
-}
-function exportRegex() {
-  if(S.regexRules.length===0) return alert('没有规则可导出');
-  var blob = new Blob([JSON.stringify(S.regexRules, null, 2)], {type: 'application/json'});
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '小酒馆_正则包.json'; a.click();
-}
-function importRegex(input) {
-  var file = input.files[0]; if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var data = JSON.parse(e.target.result);
-      if(!Array.isArray(data)) data = [data];
-      data.forEach(function(item) {
-        S.regexRules.push({
-          name: item.name || item.id || '导入的规则',
-          find: item.find || item.regex || '',
-          replace: item.replace || item.replacement || '',
-          enabled: true
-        });
-      });
-      DB.set('regexRules', S.regexRules);
-      renderRegexList();
-      alert('导入成功！快去试试吧！');
-    } catch(err) { alert('导入失败：格式不对呀'); }
-  };
-  reader.readAsText(file); input.value = '';
-}
-function applyRegex(text) {
-  var processed = text;
-  S.regexRules.forEach(function(rule) {
-    if (rule.enabled === false || !rule.find) return;
-    try {
-      var regex = new RegExp(rule.find, 'gm');
-      processed = processed.replace(regex, rule.replace);
-    } catch(e) { console.error('正则错误:', rule.name, e); }
-  });
-  return processed;
-}
-function executeScripts(container) {
-  var scripts = container.querySelectorAll('script');
-  scripts.forEach(function(oldScript) {
-    var newScript = document.createElement('script');
-    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-    oldScript.parentNode.replaceChild(newScript, oldScript);
-  });
-}
-/* ========================================== */
+    </div>
 
-function init(){var s=S.settings;document.getElementById('apiUrl').value=s.apiUrl||'';document.getElementById('apiKey').value=s.apiKey||'';document.getElementById('model').value=s.model||'';document.getElementById('streamMode').value=s.stream?'1':'0';document.getElementById('temperature').value=s.temperature||0.8;document.getElementById('temperature').nextElementSibling.textContent=s.temperature||0.8;document.getElementById('topP').value=s.topP||1;document.getElementById('topP').nextElementSibling.textContent=s.topP||1;document.getElementById('maxTokens').value=s.maxTokens||0;document.getElementById('freqPen').value=s.freqPen||0;document.getElementById('freqPen').nextElementSibling.textContent=s.freqPen||0;document.getElementById('presPen').value=s.presPen||0;document.getElementById('presPen').nextElementSibling.textContent=s.presPen||0;document.getElementById('contextSize').value=s.contextSize||0;document.getElementById('systemPrompt').value=s.systemPrompt||'';document.getElementById('authorNote').value=s.authorNote||'';document.getElementById('anDepth').value=s.anDepth||4;document.getElementById('userName').value=s.userName||'';document.getElementById('userPersona').value=s.userPersona||'';document.getElementById('themeSelect').value=s.theme||'dark';document.getElementById('fontSelect').value=s.font||'system';document.getElementById('fontSize').value=s.fontSize||16;document.getElementById('fontSize').nextElementSibling.textContent=(s.fontSize||16)+'px';changeTheme(s.theme||'dark');if(s.font&&s.font!=='system')changeFont(s.font);changeFontSize(s.fontSize||16);renderChars();renderHistory();renderWB();renderRegexList();if(S.chats.length>0)loadChat(S.chats[0].id)}
+    <!-- 苹果风格悬浮球 -->
+    <div id="floating-ball"></div>
 
-function showModal(n){document.getElementById('modal-'+n).classList.remove('hidden')}
-function hideModal(n){document.getElementById('modal-'+n).classList.add('hidden')}
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('show');document.getElementById('sidebarOverlay').classList.toggle('show')}
-function switchTab(btn,id){btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');btn.closest('.modal').querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});document.getElementById(id).classList.add('active')}
-function changeTheme(t){document.body.className='theme-'+t;S.settings.theme=t}
-function changeFont(v){document.getElementById('chatArea').style.fontFamily=v==='system'?'system-ui,-apple-system,sans-serif':v;S.settings.font=v}
-function changeFontSize(s){document.getElementById('chatArea').style.fontSize=s+'px';S.settings.fontSize=s}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
-function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function estimateTokens(t){return Math.ceil(t.length/2)}
-function updateTokenCount(){var chat=getChat();if(!chat)return;var total=0;chat.messages.forEach(function(m){total+=estimateTokens(m.content)});document.getElementById('tokenCount').textContent='≈'+total+' tokens'}
-function fmtTime(ts){return new Date(ts).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'})}
+    <!-- 悬浮球控制中心 (默认隐藏) -->
+    <div id="control-panel" class="hidden">
+        <div class="panel-header">
+            <span>控制中心</span>
+            <span class="close-btn" id="close-panel">关闭</span>
+        </div>
+        <div class="panel-content">
+            <div class="setting-group">
+                <label>API 接入 (中转站)</label>
+                <input type="text" id="api-url" placeholder="输入 API URL">
+                <input type="password" id="api-key" placeholder="输入 API Key">
+                <input type="text" id="api-model" placeholder="输入模型名称 (如 gpt-4)">
+                <button id="save-api-btn">保存配置</button>
+            </div>
+            <div class="setting-group">
+                <label>主题颜色调配</label>
+                <input type="text" id="color-primary" placeholder="主色调 (默认 #adcdea)">
+                <input type="text" id="color-bg" placeholder="背景色 (默认 #ffffff)">
+                <button id="save-color-btn">保存主题</button>
+            </div>
+            <div class="setting-group">
+                <label>字体设置</label>
+                <select id="font-select">
+                    <option value="LXGW WenKai Lite">霞鹜文楷 (开源)</option>
+                    <option value="SimSun">宋体</option>
+                    <option value="Custom">自定义字体</option>
+                </select>
+                <input type="file" id="font-upload" accept=".ttf" style="display:none;">
+                <button id="upload-font-btn">上传 TTF 字体</button>
+            </div>
+            <div class="setting-group">
+                <label>背景设置</label>
+                <input type="file" id="bg-upload" accept="image/*" style="display:none;">
+                <button id="upload-bg-btn">上传背景图片</button>
+            </div>
+            <div class="setting-group">
+                <label>开发者工具</label>
+                <button id="open-notebook-btn">笔记本</button>
+                <button id="open-editor-btn">代码编辑器</button>
+            </div>
+        </div>
+    </div>
 
-function renderMd(text){return text.replace(/```([\s\S]*?)```/g,'<pre><code>$1</code></pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}
+    <!-- 角色卡生成 APP 窗口 (默认隐藏) -->
+    <div id="app-window" class="hidden">
+        
+        <!-- 第一页：主页 -->
+        <div id="page-1" class="app-page">
+            <div class="page-title">角色卡生成</div>
+            <button class="main-btn" id="btn-create-role">创建角色</button>
+            <div class="role-manage-section">
+                <div class="section-title">管理角色</div>
+                <div id="role-list" class="role-list">
+                    <!-- 角色列表将通过 JS 动态生成 -->
+                </div>
+            </div>
+            <div class="bottom-bar">
+                <button class="text-btn" id="btn-exit-app">退出</button>
+            </div>
+        </div>
 
-function saveSettings(){var s=S.settings;s.apiUrl=document.getElementById('apiUrl').value.trim();s.apiKey=document.getElementById('apiKey').value.trim();s.model=document.getElementById('model').value.trim();s.stream=document.getElementById('streamMode').value==='1';s.temperature=parseFloat(document.getElementById('temperature').value);s.topP=parseFloat(document.getElementById('topP').value);s.maxTokens=parseInt(document.getElementById('maxTokens').value)||0;s.freqPen=parseFloat(document.getElementById('freqPen').value);s.presPen=parseFloat(document.getElementById('presPen').value);s.contextSize=parseInt(document.getElementById('contextSize').value)||0;s.systemPrompt=document.getElementById('systemPrompt').value.trim();s.authorNote=document.getElementById('authorNote').value.trim();s.anDepth=parseInt(document.getElementById('anDepth').value)||4;s.userName=document.getElementById('userName').value.trim();s.userPersona=document.getElementById('userPersona').value.trim();s.theme=document.getElementById('themeSelect').value;s.font=document.getElementById('fontSelect').value;s.fontSize=document.getElementById('fontSize').value;DB.set('settings',s);hideModal('settings')}
+        <!-- 第二页：基础信息 -->
+        <div id="page-2" class="app-page hidden">
+            <div class="page-title">基础资料</div>
+            <div class="form-group">
+                <label>名称</label>
+                <input type="text" id="role-name" placeholder="输入角色名称">
+            </div>
+            <div class="form-group">
+                <label>年龄</label>
+                <input type="number" id="role-age" placeholder="输入年龄">
+            </div>
+            <div class="form-group">
+                <label>身高 (cm)</label>
+                <input type="number" id="role-height" placeholder="输入身高">
+            </div>
+            <div class="form-group">
+                <label>性别</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="role-gender" value="男"> 男</label>
+                    <label><input type="radio" name="role-gender" value="女" checked> 女</label>
+                </div>
+            </div>
+            <div class="bottom-bar flex-between">
+                <button class="text-btn" id="btn-prev-to-1">上一步</button>
+                <button class="text-btn" id="btn-next-to-3">下一步</button>
+            </div>
+        </div>
 
-function renderChars(){var el=document.getElementById('charList');el.innerHTML='';S.chars.forEach(function(c){var active=S.currentCharId===c.id?'active':'';el.innerHTML+='<div class="char-card '+active+'" onclick="selectChar(\''+c.id+'\')"><div class="char-card-top"><div class="char-avatar">'+(c.avatar||'🧑')+'</div><div class="char-info"><div class="char-card-name">'+esc(c.name)+'</div><div class="char-card-desc">'+esc(c.desc||'')+'</div></div></div><div class="char-card-actions"><button onclick="event.stopPropagation();editChar(\''+c.id+'\')">编辑</button><button onclick="event.stopPropagation();exportChar(\''+c.id+'\')">导出</button><button onclick="event.stopPropagation();deleteChar(\''+c.id+'\')">删除</button></div></div>'})}
-function clearCharForm(){document.getElementById('charEditTitle').textContent='👤 创建角色';document.getElementById('charEditId').value='';document.getElementById('charAvatar').value='';document.getElementById('charName').value='';document.getElementById('charDesc').value='';document.getElementById('charPrompt').value='';document.getElementById('charGreeting').value='';document.getElementById('charExamples').value=''}
-function saveChar(){var id=document.getElementById('charEditId').value;var c={id:id||Date.now().toString(),avatar:document.getElementById('charAvatar').value.trim()||'🧑',name:document.getElementById('charName').value.trim()||'未命名',desc:document.getElementById('charDesc').value.trim(),prompt:document.getElementById('charPrompt').value.trim(),greeting:document.getElementById('charGreeting').value.trim(),examples:document.getElementById('charExamples').value.trim()};if(id){var idx=S.chars.findIndex(function(x){return x.id===id});if(idx>=0)S.chars[idx]=c}else{S.chars.push(c)}DB.set('chars',S.chars);renderChars();hideModal('charEdit')}
-function editChar(id){var c=S.chars.find(function(x){return x.id===id});if(!c)return;document.getElementById('charEditTitle').textContent='✏️ 编辑角色';document.getElementById('charEditId').value=c.id;document.getElementById('charAvatar').value=c.avatar||'';document.getElementById('charName').value=c.name;document.getElementById('charDesc').value=c.desc||'';document.getElementById('charPrompt').value=c.prompt||'';document.getElementById('charGreeting').value=c.greeting||'';document.getElementById('charExamples').value=c.examples||'';showModal('charEdit')}
-function deleteChar(id){if(!confirm('删除此角色？'))return;S.chars=S.chars.filter(function(x){return x.id!==id});if(S.currentCharId===id)S.currentCharId=null;DB.set('chars',S.chars);renderChars();updateTitle()}
-function selectChar(id){S.currentCharId=S.currentCharId===id?null:id;renderChars();updateTitle();toggleSidebar();newChat()}
-function exportChar(id){var c=S.chars.find(function(x){return x.id===id});if(!c)return;var blob=new Blob([JSON.stringify(c,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=c.name+'.json';a.click()}
-function exportAllChars(){if(S.chars.length===0)return alert('没有角色可导出');var blob=new Blob([JSON.stringify(S.chars,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='all_chars.json';a.click()}
-function importChar(){document.getElementById('fileImport').click()}
-function handleImport(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(Array.isArray(data)){data.forEach(function(c){c.id=Date.now().toString()+Math.random().toString(36).substr(2,4);S.chars.push(c)})}else{data.id=Date.now().toString();S.chars.push(data)}DB.set('chars',S.chars);renderChars();alert('导入成功！')}catch(err){alert('导入失败：'+err.message)}};reader.readAsText(file);input.value=''}
+        <!-- 第三页：创建形象 (女性向) -->
+        <div id="page-3" class="app-page hidden">
+            <div class="page-title">详细形象</div>
+            <textarea id="role-prompt" placeholder="AI将根据下方选项生成描述，您也可在此手动修改..."></textarea>
+            
+            <div class="scroll-selector">
+                <label>眼型 <span class="detail-hint" onclick="showDetail('eye')">详情</span></label>
+                <div class="scroll-options" id="eye-options">
+                    <div class="option active" data-val="桃花眼">桃花眼</div>
+                    <div class="option" data-val="狐狸眼">狐狸眼</div>
+                    <div class="option" data-val="杏眼">杏眼</div>
+                    <div class="option" data-val="瑞凤眼">瑞凤眼</div>
+                </div>
+            </div>
 
-function renderWB(){var el=document.getElementById('wbList');el.innerHTML='';S.wb.forEach(function(w,i){el.innerHTML+='<div class="wb-item"><label>关键词（逗号分隔）</label><input type="text" value="'+esc(w.keys||'')+'" onchange="S.wb['+i+'].keys=this.value;DB.set(\'worldbook\',S.wb)"><label>内容</label><textarea onchange="S.wb['+i+'].content=this.value;DB.set(\'worldbook\',S.wb)">'+esc(w.content||'')+'</textarea><div class="wb-actions"><button onclick="S.wb.splice('+i+',1);DB.set(\'worldbook\',S.wb);renderWB()">删除</button></div></div>'})}
-function addWB(){S.wb.push({keys:'',content:''});DB.set('worldbook',S.wb);renderWB()}
-function getWBContext(text){var result=[];S.wb.forEach(function(w){if(!w.keys||!w.content)return;var keys=w.keys.split(',');keys.forEach(function(k){k=k.trim().toLowerCase();if(k&&text.toLowerCase().indexOf(k)>=0){result.push(w.content)}})});return result.join('\n')}
+            <div class="scroll-selector">
+                <label>头发长度</label>
+                <div class="scroll-options" id="hair-options">
+                    <div class="option active" data-val="及腰长发">及腰长发</div>
+                    <div class="option" data-val="齐肩中发">齐肩中发</div>
+                    <div class="option" data-val="利落短发">利落短发</div>
+                </div>
+            </div>
 
-function renderHistory(){var el=document.getElementById('historyList');el.innerHTML='';S.chats.forEach(function(c){var active=S.currentChatId===c.id?'active':'';var time=fmtTime(c.updatedAt||c.createdAt);var msgCount=c.messages?c.messages.length:0;el.innerHTML+='<div class="history-item '+active+'" onclick="loadChat(\''+c.id+'\');toggleSidebar()"><div class="h-title">'+esc(c.title||'新对话')+'</div><div class="h-meta"><span>'+time+'</span><span>'+msgCount+'条</span></div><div class="h-actions"><button onclick="event.stopPropagation();deleteChat(\''+c.id+'\')">删除</button></div></div>'})}
-function newChat(){var ch=S.currentCharId?S.chars.find(function(x){return x.id===S.currentCharId}):null;var chat={id:Date.now().toString(),charId:S.currentCharId,title:ch?ch.name+' 的对话':'新对话',messages:[],createdAt:Date.now(),updatedAt:Date.now()};if(ch&&ch.greeting){chat.messages.push({role:'assistant',content:ch.greeting,ts:Date.now(),swipes:[ch.greeting],swipeIdx:0})}S.chats.unshift(chat);DB.set('chats',S.chats);loadChat(chat.id);renderHistory();if(document.getElementById('sidebar').classList.contains('show'))toggleSidebar()}
-function getChat(){if(!S.currentChatId)return null;return S.chats.find(function(x){return x.id===S.currentChatId})}
-function loadChat(id){var chat=S.chats.find(function(x){return x.id===id});if(!chat)return;S.currentChatId=id;if(chat.charId)S.currentCharId=chat.charId;var area=document.getElementById('chatArea');area.innerHTML='';if(chat.messages.length===0){area.innerHTML='<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>'}else{chat.messages.forEach(function(m,i){appendMsgDOM(m,i)})}updateTitle();updateTokenCount();renderChars()}
-function deleteChat(id){if(!confirm('删除此对话？'))return;S.chats=S.chats.filter(function(x){return x.id!==id});DB.set('chats',S.chats);if(S.currentChatId===id){S.currentChatId=null;document.getElementById('chatArea').innerHTML='<div class="system-msg">欢迎来到小酒馆，开始聊天吧 ✨</div>';document.getElementById('tokenCount').textContent=''}renderHistory()}
-function updateTitle(){var ch=S.currentCharId?S.chars.find(function(x){return x.id===S.currentCharId}):null;document.getElementById('topTitle').textContent=ch?'🏮 '+ch.name:'🏮 小酒馆'}
+            <div class="scroll-selector">
+                <label>胸部丰满度</label>
+                <div class="scroll-options" id="breast-options">
+                    <div class="option" data-val="盈盈一握">盈盈一握</div>
+                    <div class="option active" data-val="丰满挺拔">丰满挺拔</div>
+                    <div class="option" data-val="波涛汹涌">波涛汹涌</div>
+                </div>
+            </div>
 
-// 🌟 渲染消息时调用正则替换和JS唤醒
-function appendMsgDOM(m,idx){
-  var area=document.getElementById('chatArea');var ch=S.currentCharId?S.chars.find(function(x){return x.id===S.currentCharId}):null;var uname=S.settings.userName||'你';var wrap=document.createElement('div');wrap.className='msg-wrap '+m.role;wrap.id='msg-'+idx;
-  var msg=document.createElement('div');msg.className='message';
-  var header=document.createElement('div');header.className='msg-header';
-  var tag=document.createElement('span');tag.className='role-tag '+(m.role==='user'?'user-tag':'char-tag');
-  tag.textContent=m.role==='user'?uname:(ch?ch.name:'文字 AI');
-  var time=document.createElement('span');time.className='msg-time';time.textContent=m.ts?fmtTime(m.ts):'';
-  header.appendChild(tag);header.appendChild(time);
-  var content=document.createElement('div');content.className='msg-content';
-  if(m.image){var img=document.createElement('img');img.className='msg-img';img.src=m.image;img.onclick=function(){showFullImg(m.image)};content.appendChild(img)}
-  
-  // ✨ 正则替换 & JS 唤醒
-  content.innerHTML += renderMd(applyRegex(m.content));
-  
-  msg.appendChild(header);msg.appendChild(content);wrap.appendChild(msg);
-  var actions=document.createElement('div');actions.className='msg-actions';
-  actions.innerHTML='<button onclick="copyMsg('+idx+')">复制</button><button onclick="editMsg('+idx+')">编辑</button><button onclick="deleteMsg('+idx+')">删除</button>';
-  if(m.role==='assistant'){actions.innerHTML+='<button onclick="regenMsg('+idx+')">重新生成</button>'}
-  wrap.appendChild(actions);
-  if(m.role==='assistant'&&m.swipes&&m.swipes.length>1){var nav=document.createElement('div');nav.className='swipe-nav';nav.innerHTML='<button onclick="swipeMsg('+idx+',-1)">◀</button><span>'+(m.swipeIdx+1)+'/'+m.swipes.length+'</span><button onclick="swipeMsg('+idx+',1)">▶</button>';wrap.appendChild(nav)}
-  
-  area.appendChild(wrap);
-  executeScripts(content); // ✨ 确保面板的JS活过来
-  area.scrollTop=area.scrollHeight;
-}
+            <div class="scroll-selector">
+                <label>私密体香 <span class="detail-hint" onclick="showDetail('scent')">详情</span></label>
+                <div class="scroll-options" id="scent-options">
+                    <div class="option active" data-val="幽兰暗香">幽兰暗香</div>
+                    <div class="option" data-val="奶香蜜桃">奶香蜜桃</div>
+                    <div class="option" data-val="冷冽玫瑰">冷冽玫瑰</div>
+                </div>
+            </div>
 
-function copyMsg(idx){var chat=getChat();if(!chat||!chat.messages[idx])return;var text=chat.messages[idx].content;navigator.clipboard.writeText(text).then(function(){alert('已复制')}).catch(function(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('已复制')})}
-function editMsg(idx){var chat=getChat();if(!chat||!chat.messages[idx])return;document.getElementById('msgEditIdx').value=idx;document.getElementById('msgEditContent').value=chat.messages[idx].content;showModal('msgEdit')}
-function saveMsgEdit(){var idx=parseInt(document.getElementById('msgEditIdx').value);var chat=getChat();if(!chat||!chat.messages[idx])return;chat.messages[idx].content=document.getElementById('msgEditContent').value;if(chat.messages[idx].swipes){chat.messages[idx].swipes[chat.messages[idx].swipeIdx]=chat.messages[idx].content}DB.set('chats',S.chats);hideModal('msgEdit');loadChat(chat.id)}
-function deleteMsg(idx){if(!confirm('删除此消息？'))return;var chat=getChat();if(!chat)return;chat.messages.splice(idx,1);chat.updatedAt=Date.now();DB.set('chats',S.chats);loadChat(chat.id);renderHistory()}
-function swipeMsg(idx,dir){var chat=getChat();if(!chat||!chat.messages[idx])return;var m=chat.messages[idx];if(!m.swipes)return;var newIdx=m.swipeIdx+dir;if(newIdx<0||newIdx>=m.swipes.length)return;m.swipeIdx=newIdx;m.content=m.swipes[newIdx];DB.set('chats',S.chats);loadChat(chat.id)}
+            <div class="form-group">
+                <label>AI 生成字数</label>
+                <input type="number" id="ai-word-count" placeholder="例如：300" value="300">
+            </div>
 
-async function regenMsg(idx){var chat=getChat();if(!chat)return;var s=S.settings;if(!s.apiUrl||!s.apiKey)return alert('请先设置API');var msgsBefore=chat.messages.slice(0,idx);var messages=buildMessages(msgsBefore);var el=document.getElementById('msg-'+idx);if(el){var contentEl=el.querySelector('.msg-content');if(contentEl){contentEl.innerHTML='<div class="typing-indicator"><span></span><span></span><span></span></div>'}}
-try{var reply=await callAPI(messages,s);var m=chat.messages[idx];if(!m.swipes){m.swipes=[m.content]}m.swipes.push(reply);m.swipeIdx=m.swipes.length-1;m.content=reply;m.ts=Date.now();chat.updatedAt=Date.now();DB.set('chats',S.chats);loadChat(chat.id);renderHistory()}catch(err){alert('重新生成失败：'+err.message)}}
+            <button class="main-btn" id="btn-generate-ai">AI 生成形象</button>
 
-function buildMessages(chatMsgs){var messages=[];var s=S.settings;var ch=S.currentCharId?S.chars.find(function(x){return x.id===S.currentCharId}):null;
-var sysParts=[];
-if(ch&&ch.prompt)sysParts.push(ch.prompt);else if(s.systemPrompt)sysParts.push(s.systemPrompt);
-if(s.userPersona)sysParts.push('用户人设：'+s.userPersona);
-var allText=chatMsgs.map(function(m){return m.content}).join(' ');
-var wbCtx=getWBContext(allText);
-if(wbCtx)sysParts.push('世界设定：\n'+wbCtx);
-if(ch&&ch.examples)sysParts.push('示例对话：\n'+ch.examples);
-if(sysParts.length>0)messages.push({role:'system',content:sysParts.join('\n\n')});
-var ctx=chatMsgs;
-if(s.contextSize>0&&ctx.length>s.contextSize)ctx=ctx.slice(-s.contextSize);
-var arr=ctx.map(function(m){if(m.image){return{role:m.role,content:[{type:'text',text:m.content||'请看这张图片'},{type:'image_url',image_url:{url:m.image}}]}}return{role:m.role,content:m.content}});
-if(s.authorNote){var depth=Math.min(s.anDepth||4,arr.length);var pos=arr.length-depth;if(pos<0)pos=0;arr.splice(pos,0,{role:'system',content:'[作者注释：'+s.authorNote+']'})}
-messages=messages.concat(arr);return messages}
+            <div class="bottom-bar flex-between">
+                <button class="text-btn" id="btn-prev-to-2">上一步</button>
+                <button class="text-btn" id="btn-final-confirm">最终确认</button>
+            </div>
+        </div>
+    </div>
 
-async function callAPI(messages,s){var body={model:s.model||'deepseek-chat',messages:messages,temperature:s.temperature||0.8,top_p:s.topP||1,frequency_penalty:s.freqPen||0,presence_penalty:s.presPen||0};
-if(s.maxTokens>0)body.max_tokens=s.maxTokens;
-if(s.stream)body.stream=true;
-var res=await fetch(s.apiUrl+'/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.apiKey},body:JSON.stringify(body)});
-if(!s.stream){var data=await res.json();return data.choices&&data.choices[0]?data.choices[0].message.content:'回复出错了...'}
-var reader=res.body.getReader();var decoder=new TextDecoder();var result='';var buffer='';
-while(true){var chunk=await reader.read();if(chunk.done)break;
-buffer+=decoder.decode(chunk.value,{stream:true});
-var lines=buffer.split('\n');buffer=lines.pop();
-for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line||line==='data: [DONE]')continue;if(line.startsWith('data: ')){try{var json=JSON.parse(line.slice(6));var delta=json.choices&&json.choices[0]&&json.choices[0].delta;if(delta&&delta.content){result+=delta.content;updateStreamingMsg(result)}}catch(e){}}}}
-return result}
+    <!-- 详情弹窗 (用于显示眼型、体香详情等) -->
+    <div id="info-modal" class="hidden">
+        <div class="modal-box">
+            <h3 id="info-title">详情</h3>
+            <p id="info-content">内容</p>
+            <button class="main-btn" id="close-info-modal">我知道了</button>
+        </div>
+    </div>
 
-// 🌟 流式输出时调用正则替换
-function updateStreamingMsg(text){var area=document.getElementById('chatArea');var el=document.getElementById('streaming-msg');if(!el){var wrap=document.createElement('div');wrap.className='msg-wrap assistant';var msg=document.createElement('div');msg.className='message';var ch=S.currentCharId?S.chars.find(function(x){return x.id===S.currentCharId}):null;var header=document.createElement('div');header.className='msg-header';var tag=document.createElement('span');tag.className='role-tag char-tag';tag.textContent=ch?ch.name:'🤖 AI';var time=document.createElement('span');time.className='msg-time';time.textContent=fmtTime(Date.now());header.appendChild(tag);header.appendChild(time);var content=document.createElement('div');content.className='msg-content streaming-cursor';content.id='streaming-msg';msg.appendChild(header);msg.appendChild(content);wrap.appendChild(msg);area.appendChild(wrap);el=content}
-  el.innerHTML=renderMd(applyRegex(text)); // ✨ 实时正则渲染
-  area.scrollTop=area.scrollHeight;
-}
+    <!-- 角色详情弹窗 -->
+    <div id="role-detail-modal" class="hidden">
+        <div class="modal-box">
+            <h3 id="detail-name">角色名</h3>
+            <div id="detail-content" class="detail-text"></div>
+            <div class="flex-between" style="margin-top: 15px;">
+                <button class="text-btn" id="close-role-detail">关闭</button>
+                <button class="main-btn" id="copy-role-detail">一键复制</button>
+            </div>
+        </div>
+    </div>
 
-// 🌟 流式输出结束时，唤醒脚本
-function finalizeStreamingMsg(){
-  var el=document.getElementById('streaming-msg');
-  if(el)el.classList.remove('streaming-cursor');
-  el=null;
-  var area = document.getElementById('chatArea');
-  var lastMsg = area.lastElementChild;
-  if(lastMsg) executeScripts(lastMsg); // ✨ 唤醒脚本
-}
+    <!-- 隐藏的头像上传控件 -->
+    <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
 
-async function sendMessage(){var input=document.getElementById('userInput'),msg=input.value.trim();if(!msg)return;input.value='';input.style.height='auto';
-var chat=getChat();if(!chat){newChat();chat=getChat()}if(!chat)return;
-var msgObj={role:'user',content:msg,ts:Date.now()};
-if(pendingImg){msgObj.image=pendingImg}
-chat.messages.push(msgObj);
-clearImg();chat.updatedAt=Date.now();
-if(chat.messages.length<=2)chat.title=msg.substring(0,20);
-DB.set('chats',S.chats);renderHistory();appendMsgDOM(chat.messages[chat.messages.length-1],chat.messages.length-1);
-var s=S.settings;
-if(!s.apiUrl||!s.apiKey){var r='请先点 ⚙️ 设置 API 地址和密钥~';chat.messages.push({role:'assistant',content:r,ts:Date.now(),swipes:[r],swipeIdx:0});DB.set('chats',S.chats);appendMsgDOM(chat.messages[chat.messages.length-1],chat.messages.length-1);return}
-var messages=buildMessages(chat.messages);
-if(!s.stream){var area=document.getElementById('chatArea');var typing=document.createElement('div');typing.className='msg-wrap assistant';typing.id='typing-wrap';typing.innerHTML='<div class="message"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';area.appendChild(typing);area.scrollTop=area.scrollHeight}
-try{var reply=await callAPI(messages,s);
-if(!s.stream){var tw=document.getElementById('typing-wrap');if(tw)tw.remove()}
-finalizeStreamingMsg();
-chat.messages.push({role:'assistant',content:reply,ts:Date.now(),swipes:[reply],swipeIdx:0});chat.updatedAt=Date.now();DB.set('chats',S.chats);updateTokenCount();
-loadChat(chat.id);renderHistory()}catch(err){if(!s.stream){var tw=document.getElementById('typing-wrap');if(tw)tw.remove()}finalizeStreamingMsg();
-var errMsg='连接失败：'+err.message;chat.messages.push({role:'assistant',content:errMsg,ts:Date.now(),swipes:[errMsg],swipeIdx:0});DB.set('chats',S.chats);loadChat(chat.id)}}
-
-document.addEventListener('keydown',function(e){if(e.target.id==='userInput'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
-init();
-var pendingImg=null;
-function previewImg(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){pendingImg=e.target.result;document.getElementById('imgThumb').src=pendingImg;document.getElementById('imgPreview').style.display='flex';document.getElementById('imgPreview').style.alignItems='center';};reader.readAsDataURL(file);input.value='';}
-function clearImg(){pendingImg=null;document.getElementById('imgPreview').style.display='none';document.getElementById('imgThumb').src='';}
-function showFullImg(src){var div=document.createElement('div');div.className='img-fullscreen';div.onclick=function(){div.remove()};div.innerHTML='<img src="'+src+'">';document.body.appendChild(div);}
-</script>
 </body>
 </html>
