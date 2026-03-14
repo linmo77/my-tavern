@@ -6,17 +6,395 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
   <title>纯净面板 · 角色卡生成</title>
-  <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    :root{
+      --primary: #adcdea;
+      --surface: #ffffff;
+      --text: #16202a;
+      --muted: rgba(22,32,42,.65);
+      --border: rgba(22,32,42,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.10);
+      --radius: 18px;
+
+      --font-ui: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
+                 "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                   "Liberation Mono", "Courier New", monospace;
+
+      --bg-image: none;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+    body{
+      margin: 0;
+      color: var(--text);
+      font-family: var(--font-ui);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--primary) 45%, white) 0%, var(--surface) 70%),
+        var(--bg-image);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .app{ min-height: 100vh; padding: 18px 14px 120px; }
+
+    .screen{ display: none; }
+    .screen.is-active{ display: block; }
+
+    .home{
+      min-height: calc(100vh - 160px);
+      display: grid;
+      place-items: center;
+    }
+    .app-icon{
+      width: 120px;
+      padding: 14px 10px 10px;
+      border-radius: 26px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 82%, var(--primary));
+      box-shadow: var(--shadow);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .app-icon__glyph{
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 10px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.7);
+      display: grid;
+      place-items: center;
+      backdrop-filter: blur(12px);
+    }
+    .app-icon__glyph svg{ color: rgba(22,32,42,.85); }
+    .app-icon__name{ font-size: 14px; letter-spacing: .5px; }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: -18px -14px 14px;
+      padding: 16px 14px 12px;
+      background: rgba(255,255,255,.65);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar__title{ font-weight: 700; font-size: 18px; }
+
+    .page{ display: grid; gap: 14px; }
+
+    .card, .mini-card{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+    }
+    .card__title, .mini-card__title{
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .field{ display: grid; gap: 8px; margin: 10px 0; }
+    .field__label{ font-size: 12px; color: var(--muted); }
+
+    .input, .select, .textarea{
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.85);
+      padding: 12px 12px;
+      color: var(--text);
+      outline: none;
+    }
+    .textarea{ resize: vertical; min-height: 90px; }
+    .textarea--mono{ font-family: var(--font-mono); }
+
+    .file{
+      width: 100%;
+      border: 1px dashed var(--border);
+      background: rgba(255,255,255,.55);
+      padding: 12px;
+      border-radius: 14px;
+    }
+
+    .hint{ font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .primary-btn, .ghost-btn, .danger-btn, .icon-btn, .chip{
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 12px 12px;
+      font-weight: 650;
+      font-size: 14px;
+      cursor: pointer;
+      background: rgba(255,255,255,.75);
+      color: var(--text);
+    }
+
+    .primary-btn{
+      background: color-mix(in srgb, var(--primary) 50%, white);
+      border-color: color-mix(in srgb, var(--primary) 55%, rgba(22,32,42,.12));
+    }
+    .danger-btn{
+      background: rgba(255, 240, 240, .9);
+      border-color: rgba(180, 40, 40, .25);
+    }
+    .ghost-btn{ background: rgba(255,255,255,.55); }
+
+    .nav-row{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .row{ display: flex; align-items: center; justify-content: flex-start; }
+    .row--gap{ gap: 10px; flex-wrap: wrap; }
+
+    .divider{ height: 1px; background: var(--border); margin: 12px 0; }
+
+    .segmented{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .segmented__item{
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.6);
+      cursor: pointer;
+      user-select: none;
+    }
+    .segmented__item input{ accent-color: color-mix(in srgb, var(--primary) 65%, #4a79ff); }
+
+    .picker{ display: grid; gap: 10px; }
+    .picker__row{
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .picker__label{ font-size: 12px; color: var(--muted); }
+    .picker__controls{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .picker__value{
+      min-width: 86px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.8);
+      text-align: center;
+    }
+
+    .chip{ padding: 10px 12px; font-size: 13px; }
+    .chip--info{ background: rgba(255,255,255,.55); }
+
+    .role-grid{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .empty-hint{
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 2px;
+    }
+    .role-item{ display: grid; gap: 8px; justify-items: center; }
+    .avatar{
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.75);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .avatar img{ width: 100%; height: 100%; object-fit: cover; }
+    .avatar .plus{ font-size: 26px; color: rgba(22,32,42,.55); line-height: 1; }
+    .role-name-btn{
+      width: 100%;
+      padding: 10px 8px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.6);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .modal{ position: fixed; inset: 0; display: none; z-index: 50; }
+    .modal.is-open{ display: block; }
+    .modal__mask{ position: absolute; inset: 0; background: rgba(0,0,0,.25); }
+    .modal__panel{
+      position: absolute;
+      left: 50%;
+      top: 12%;
+      transform: translateX(-50%);
+      width: min(92vw, 520px);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.86);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .modal__head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal__title{ font-weight: 800; }
+    .modal__body{
+      margin: 0;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 46vh;
+      overflow: auto;
+      font-family: var(--font-ui);
+    }
+    .modal__foot{
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      justify-content: flex-end;
+    }
+
+    .icon-btn{ padding: 10px 12px; min-width: 44px; }
+    .x{ font-size: 18px; }
+
+    .assistive-ball{
+      position: fixed;
+      z-index: 60;
+      right: 14px;
+      bottom: 120px;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.45);
+      background: rgba(255,255,255,.35);
+      box-shadow: 0 12px 28px rgba(0,0,0,.18);
+      backdrop-filter: blur(16px);
+      cursor: pointer;
+      touch-action: none;
+    }
+    .assistive-ball::after{
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--primary) 55%, rgba(255,255,255,.7));
+      border: 1px solid rgba(22,32,42,.06);
+    }
+
+    .assistive-panel{
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: none;
+    }
+    .assistive-panel.is-open{ display: block; }
+    .assistive-panel__mask{ position: absolute; inset: 0; background: rgba(0,0,0,.22); }
+    .assistive-panel__sheet{
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      width: min(96vw, 560px);
+      max-height: 82vh;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+    .assistive-panel__head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .assistive-panel__title{ font-weight: 800; }
+
+    .tabs{
+      display: flex;
+      gap: 8px;
+      padding: 10px 10px 0;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.65);
+      padding: 10px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      cursor: pointer;
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .tab.is-active{
+      background: color-mix(in srgb, var(--primary) 45%, white);
+      border-color: color-mix(in srgb, var(--primary) 55%, rgba(22,32,42,.12));
+    }
+    .tabpanes{ padding: 10px; overflow: auto; }
+    .tabpane{ display: none; }
+    .tabpane.is-active{ display: block; }
+
+    .theme-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .swatch-preview{
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .swatch{
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.6);
+    }
+    .swatch--primary{ background: var(--primary); }
+    .swatch--surface{ background: var(--surface); }
+    .swatch--text{
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.6);
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .status{ margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior: auto !important; }
+    }
+  </style>
 </head>
 
 <body>
   <main id="app" class="app">
-    <!-- Home: only one app icon -->
     <section class="screen is-active" id="screen-home" aria-label="主页">
       <div class="home">
         <button id="openRoleApp" class="app-icon" type="button" aria-label="打开 角色卡生成">
           <div class="app-icon__glyph" aria-hidden="true">
-            <!-- simple svg, no emoji -->
             <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
               <path d="M7 7.5C7 5.015 9.015 3 11.5 3S16 5.015 16 7.5 13.985 12 11.5 12 7 9.985 7 7.5Z" stroke="currentColor" stroke-width="1.5"/>
               <path d="M4 21c.8-4.3 4-6.5 7.5-6.5S18.2 16.7 19 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -27,7 +405,6 @@
       </div>
     </section>
 
-    <!-- Role App Page 1 -->
     <section class="screen" id="screen-role-1" aria-label="角色卡生成 - 首页">
       <header class="topbar">
         <div class="topbar__title">角色卡生成</div>
@@ -47,7 +424,6 @@
       </div>
     </section>
 
-    <!-- Role App Page 2 -->
     <section class="screen" id="screen-role-2" aria-label="创建角色 - 基础信息">
       <header class="topbar">
         <div class="topbar__title">创建角色</div>
@@ -94,7 +470,6 @@
       </div>
     </section>
 
-    <!-- Role App Page 3 -->
     <section class="screen" id="screen-role-3" aria-label="创建角色 - 形象设定">
       <header class="topbar">
         <div class="topbar__title">创建形象</div>
@@ -104,10 +479,7 @@
         <section class="card">
           <div class="card__title">资料输入框（可自动生成，也可手填）</div>
           <textarea id="roleProfile" class="textarea" rows="7" placeholder="你也可以直接手动输入角色设定……"></textarea>
-
-          <div class="hint">
-            点击“完成”后，会根据你的选择生成一段合理的形象描述，填入上面的输入框。
-          </div>
+          <div class="hint">点击“完成”后，会根据你的选择生成一段合理的形象描述，填入上面的输入框。</div>
         </section>
 
         <section class="card">
@@ -172,7 +544,6 @@
       </div>
     </section>
 
-    <!-- Role Detail Modal -->
     <div id="modal" class="modal" aria-hidden="true">
       <div class="modal__mask" data-close="modal"></div>
       <div class="modal__panel" role="dialog" aria-modal="true" aria-label="角色详情">
@@ -191,10 +562,8 @@
     </div>
   </main>
 
-  <!-- Assistive floating ball -->
   <div id="assistiveBall" class="assistive-ball" aria-label="悬浮球"></div>
 
-  <!-- Assistive panel -->
   <div id="assistivePanel" class="assistive-panel" aria-hidden="true">
     <div class="assistive-panel__mask" data-close="panel"></div>
 
@@ -216,7 +585,6 @@
       </div>
 
       <div class="tabpanes">
-        <!-- API -->
         <section class="tabpane is-active" data-pane="api">
           <div class="mini-card">
             <div class="mini-card__title">中转站配置（可保存多家）</div>
@@ -262,7 +630,6 @@
           </div>
         </section>
 
-        <!-- Theme -->
         <section class="tabpane" data-pane="theme">
           <div class="mini-card">
             <div class="mini-card__title">主题调色</div>
@@ -309,7 +676,6 @@
           </div>
         </section>
 
-        <!-- Font -->
         <section class="tabpane" data-pane="font">
           <div class="mini-card">
             <div class="mini-card__title">字体</div>
@@ -341,7 +707,6 @@
           </div>
         </section>
 
-        <!-- Background -->
         <section class="tabpane" data-pane="bg">
           <div class="mini-card">
             <div class="mini-card__title">背景图</div>
@@ -353,11 +718,10 @@
               <button id="btnClearBg" class="danger-btn" type="button">清除背景</button>
             </div>
 
-            <div class="hint">背景图保存到浏览器本地（IndexedDB）。图片太大可能会占用空间，建议压缩后再传。</div>
+            <div class="hint">背景图保存到浏览器本地（IndexedDB），建议压缩后再传。</div>
           </div>
         </section>
 
-        <!-- Note -->
         <section class="tabpane" data-pane="note">
           <div class="mini-card">
             <div class="mini-card__title">笔记本（自动保存）</div>
@@ -366,7 +730,6 @@
           </div>
         </section>
 
-        <!-- Code -->
         <section class="tabpane" data-pane="code">
           <div class="mini-card">
             <div class="mini-card__title">代码编辑器（轻量）</div>
@@ -382,1414 +745,830 @@
     </div>
   </div>
 
-  <script defer src="./app.js"></script>
-</body>
-</html>
+  <script>
+    /* ---------- Utilities ---------- */
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* Base theme variables */
-:root{
-  --primary: #adcdea;
-  --surface: #ffffff;
-  --text: #16202a;
-  --muted: rgba(22,32,42,.65);
-  --border: rgba(22,32,42,.10);
-  --shadow: 0 12px 30px rgba(0,0,0,.10);
-  --radius: 18px;
+    function safeJsonParse(s, fallback) { try { return JSON.parse(s); } catch { return fallback; } }
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-  --font-ui: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
-             "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-               "Liberation Mono", "Courier New", monospace;
-
-  --bg-image: none;
-}
-
-*{ box-sizing: border-box; }
-html, body{ height: 100%; }
-body{
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-ui);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--primary) 45%, white) 0%, var(--surface) 70%),
-    var(--bg-image);
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-.app{
-  min-height: 100vh;
-  padding: 18px 14px 120px;
-}
-
-/* Screens */
-.screen{ display: none; }
-.screen.is-active{ display: block; }
-
-/* Home */
-.home{
-  min-height: calc(100vh - 160px);
-  display: grid;
-  place-items: center;
-}
-.app-icon{
-  width: 120px;
-  padding: 14px 10px 10px;
-  border-radius: 26px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 82%, var(--primary));
-  box-shadow: var(--shadow);
-  color: var(--text);
-  cursor: pointer;
-}
-.app-icon__glyph{
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 10px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.7);
-  display: grid;
-  place-items: center;
-  backdrop-filter: blur(12px);
-}
-.app-icon__glyph svg{ color: rgba(22,32,42,.85); }
-.app-icon__name{
-  font-size: 14px;
-  letter-spacing: .5px;
-}
-
-/* Top bar */
-.topbar{
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  margin: -18px -14px 14px;
-  padding: 16px 14px 12px;
-  background: rgba(255,255,255,.65);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
-}
-.topbar__title{
-  font-weight: 700;
-  font-size: 18px;
-}
-
-/* Layout */
-.page{
-  display: grid;
-  gap: 14px;
-}
-
-.card, .mini-card{
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.72);
-  backdrop-filter: blur(14px);
-  border-radius: var(--radius);
-  padding: 14px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.06);
-}
-.card__title, .mini-card__title{
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.field{ display: grid; gap: 8px; margin: 10px 0; }
-.field__label{ font-size: 12px; color: var(--muted); }
-
-.input, .select, .textarea{
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.85);
-  padding: 12px 12px;
-  color: var(--text);
-  outline: none;
-}
-.textarea{ resize: vertical; min-height: 90px; }
-.textarea--mono{ font-family: var(--font-mono); }
-
-.file{
-  width: 100%;
-  border: 1px dashed var(--border);
-  background: rgba(255,255,255,.55);
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.hint{
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-/* Buttons */
-.primary-btn, .ghost-btn, .danger-btn, .icon-btn, .chip{
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  padding: 12px 12px;
-  font-weight: 650;
-  font-size: 14px;
-  cursor: pointer;
-  background: rgba(255,255,255,.75);
-  color: var(--text);
-}
-
-.primary-btn{
-  background: color-mix(in srgb, var(--primary) 50%, white);
-  border-color: color-mix(in srgb, var(--primary) 55%, rgba(22,32,42,.12));
-}
-.danger-btn{
-  background: rgba(255, 240, 240, .9);
-  border-color: rgba(180, 40, 40, .25);
-}
-.ghost-btn{
-  background: rgba(255,255,255,.55);
-}
-
-.nav-row{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.row{ display: flex; align-items: center; justify-content: flex-start; }
-.row--gap{ gap: 10px; flex-wrap: wrap; }
-
-.divider{
-  height: 1px;
-  background: var(--border);
-  margin: 12px 0;
-}
-
-/* Segmented */
-.segmented{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.segmented__item{
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.6);
-  cursor: pointer;
-  user-select: none;
-}
-.segmented__item input{ accent-color: color-mix(in srgb, var(--primary) 65%, #4a79ff); }
-
-/* Pickers */
-.picker{ display: grid; gap: 10px; }
-.picker__row{
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  gap: 10px;
-  align-items: center;
-}
-.picker__label{
-  font-size: 12px;
-  color: var(--muted);
-}
-.picker__controls{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.picker__value{
-  min-width: 86px;
-  padding: 10px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.8);
-  text-align: center;
-}
-
-.chip{
-  padding: 10px 12px;
-  font-size: 13px;
-}
-.chip--info{
-  background: rgba(255,255,255,.55);
-}
-
-/* Role grid */
-.role-grid{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.empty-hint{
-  grid-column: 1 / -1;
-  font-size: 12px;
-  color: var(--muted);
-  padding: 6px 2px;
-}
-.role-item{
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-}
-.avatar{
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.75);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.avatar img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.avatar .plus{
-  font-size: 26px;
-  color: rgba(22,32,42,.55);
-  line-height: 1;
-}
-.role-name-btn{
-  width: 100%;
-  padding: 10px 8px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.6);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-/* Modal */
-.modal{ position: fixed; inset: 0; display: none; z-index: 50; }
-.modal.is-open{ display: block; }
-.modal__mask{ position: absolute; inset: 0; background: rgba(0,0,0,.25); }
-.modal__panel{
-  position: absolute;
-  left: 50%;
-  top: 12%;
-  transform: translateX(-50%);
-  width: min(92vw, 520px);
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.86);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-.modal__head{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.modal__title{ font-weight: 800; }
-.modal__body{
-  margin: 0;
-  padding: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 46vh;
-  overflow: auto;
-  font-family: var(--font-ui);
-}
-.modal__foot{
-  display: flex;
-  gap: 10px;
-  padding: 12px;
-  border-top: 1px solid var(--border);
-  justify-content: flex-end;
-}
-
-.icon-btn{
-  padding: 10px 12px;
-  min-width: 44px;
-}
-.x{ font-size: 18px; }
-
-/* Assistive ball */
-.assistive-ball{
-  position: fixed;
-  z-index: 60;
-  right: 14px;
-  bottom: 120px;
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.45);
-  background: rgba(255,255,255,.35);
-  box-shadow: 0 12px 28px rgba(0,0,0,.18);
-  backdrop-filter: blur(16px);
-  cursor: pointer;
-}
-.assistive-ball::after{
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 55%, rgba(255,255,255,.7));
-  border: 1px solid rgba(22,32,42,.06);
-}
-
-/* Assistive panel */
-.assistive-panel{
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: none;
-}
-.assistive-panel.is-open{ display: block; }
-.assistive-panel__mask{
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.22);
-}
-.assistive-panel__sheet{
-  position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  width: min(96vw, 560px);
-  max-height: 82vh;
-  overflow: hidden;
-  border-radius: 22px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.82);
-  backdrop-filter: blur(18px);
-  box-shadow: var(--shadow);
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-}
-.assistive-panel__head{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-}
-.assistive-panel__title{ font-weight: 800; }
-
-/* Tabs */
-.tabs{
-  display: flex;
-  gap: 8px;
-  padding: 10px 10px 0;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-}
-.tab{
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.65);
-  padding: 10px 12px;
-  border-radius: 999px;
-  white-space: nowrap;
-  cursor: pointer;
-  font-weight: 650;
-  font-size: 13px;
-}
-.tab.is-active{
-  background: color-mix(in srgb, var(--primary) 45%, white);
-  border-color: color-mix(in srgb, var(--primary) 55%, rgba(22,32,42,.12));
-}
-.tabpanes{
-  padding: 10px;
-  overflow: auto;
-}
-.tabpane{ display: none; }
-.tabpane.is-active{ display: block; }
-
-/* Theme preview */
-.theme-grid{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.swatch-preview{
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
-}
-.swatch{
-  height: 44px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.6);
-}
-.swatch--primary{ background: var(--primary); }
-.swatch--surface{ background: var(--surface); }
-.swatch--text{
-  display: grid;
-  place-items: center;
-  background: rgba(255,255,255,.6);
-  color: var(--text);
-  font-weight: 900;
-}
-
-/* Small status */
-.status{
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce){
-  *{ scroll-behavior: auto !important; }
-}
-
-/* ---------- Utilities ---------- */
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-function safeJsonParse(s, fallback) {
-  try { return JSON.parse(s); } catch { return fallback; }
-}
-
-function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-
-function isValidHex(hex){
-  if(!hex) return false;
-  const s = hex.trim();
-  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s);
-}
-
-function normalizeHex(hex){
-  if(!hex) return null;
-  let s = hex.trim();
-  if(!s.startsWith("#")) s = "#" + s;
-  if(/^#([0-9a-fA-F]{3})$/.test(s)){
-    const r = s[1], g = s[2], b = s[3];
-    s = `#${r}${r}${g}${g}${b}${b}`;
-  }
-  return s.toLowerCase();
-}
-
-async function copyText(text){
-  await navigator.clipboard.writeText(text);
-}
-
-/* ---------- IndexedDB (assets: bg image, fonts, avatars) ---------- */
-const DB_NAME = "PureWebUI";
-const DB_VERSION = 1;
-const STORE_ASSETS = "assets";
-
-function openDB(){
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if(!db.objectStoreNames.contains(STORE_ASSETS)){
-        db.createObjectStore(STORE_ASSETS);
+    function isValidHex(hex){
+      if(!hex) return false;
+      const s = hex.trim();
+      return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s);
+    }
+    function normalizeHex(hex){
+      if(!hex) return null;
+      let s = hex.trim();
+      if(!s.startsWith("#")) s = "#" + s;
+      if(/^#([0-9a-fA-F]{3})$/.test(s)){
+        const r = s[1], g = s[2], b = s[3];
+        s = `#${r}${r}${g}${g}${b}${b}`;
       }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbSet(key, value){
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readwrite");
-    tx.objectStore(STORE_ASSETS).put(value, key);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function idbGet(key){
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readonly");
-    const req = tx.objectStore(STORE_ASSETS).get(key);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbDel(key){
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readwrite");
-    tx.objectStore(STORE_ASSETS).delete(key);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function idbKeys(){
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ASSETS, "readonly");
-    const store = tx.objectStore(STORE_ASSETS);
-    const req = store.getAllKeys();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-/* ---------- Storage keys ---------- */
-const LS = {
-  apiConfigs: "pw_api_configs",
-  activeCfgId: "pw_api_active",
-  themes: "pw_themes",
-  activeThemeId: "pw_theme_active",
-  activeFont: "pw_font_active",
-  note: "pw_note",
-  code: "pw_code",
-  roles: "pw_roles",
-};
-
-/* ---------- App navigation ---------- */
-function showScreen(id){
-  $$(".screen").forEach(s => s.classList.remove("is-active"));
-  const el = document.getElementById(id);
-  if(el) el.classList.add("is-active");
-  window.scrollTo({top: 0, behavior: "instant"});
-}
-
-/* ---------- Assistive ball: drag + open panel ---------- */
-const ball = $("#assistiveBall");
-const panel = $("#assistivePanel");
-
-let dragging = false;
-let moved = false;
-let startX = 0, startY = 0;
-let startLeft = 0, startTop = 0;
-
-function getBallPos(){
-  const rect = ball.getBoundingClientRect();
-  return { left: rect.left, top: rect.top };
-}
-
-function setBallPos(left, top){
-  const maxLeft = window.innerWidth - ball.offsetWidth - 8;
-  const maxTop = window.innerHeight - ball.offsetHeight - 8;
-  ball.style.left = clamp(left, 8, maxLeft) + "px";
-  ball.style.top = clamp(top, 8, maxTop) + "px";
-  ball.style.right = "auto";
-  ball.style.bottom = "auto";
-}
-
-ball.addEventListener("pointerdown", (e) => {
-  dragging = true;
-  moved = false;
-  ball.setPointerCapture(e.pointerId);
-  const pos = getBallPos();
-  startLeft = pos.left;
-  startTop = pos.top;
-  startX = e.clientX;
-  startY = e.clientY;
-});
-
-ball.addEventListener("pointermove", (e) => {
-  if(!dragging) return;
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
-  if(Math.abs(dx) + Math.abs(dy) > 6) moved = true;
-  setBallPos(startLeft + dx, startTop + dy);
-});
-
-ball.addEventListener("pointerup", (e) => {
-  dragging = false;
-  if(!moved){
-    openPanel();
-  }
-});
-
-function openPanel(){
-  panel.classList.add("is-open");
-  panel.setAttribute("aria-hidden", "false");
-}
-
-function closePanel(){
-  panel.classList.remove("is-open");
-  panel.setAttribute("aria-hidden", "true");
-}
-
-panel.addEventListener("click", (e) => {
-  const close = e.target?.getAttribute?.("data-close");
-  if(close === "panel") closePanel();
-});
-
-$$("[data-close='panel']").forEach(btn => btn.addEventListener("click", closePanel));
-
-/* ---------- Tabs ---------- */
-$$(".tab").forEach(t => {
-  t.addEventListener("click", () => {
-    $$(".tab").forEach(x => x.classList.remove("is-active"));
-    $$(".tabpane").forEach(x => x.classList.remove("is-active"));
-    t.classList.add("is-active");
-    const name = t.getAttribute("data-tab");
-    $(`.tabpane[data-pane="${name}"]`)?.classList.add("is-active");
-  });
-});
-
-/* ---------- Theme system ---------- */
-function applyThemeVars(primary, surface){
-  document.documentElement.style.setProperty("--primary", primary);
-  document.documentElement.style.setProperty("--surface", surface);
-}
-
-function loadThemes(){
-  return safeJsonParse(localStorage.getItem(LS.themes), []);
-}
-function saveThemes(themes){
-  localStorage.setItem(LS.themes, JSON.stringify(themes));
-}
-
-function refreshThemeSelect(){
-  const sel = $("#themeSelect");
-  const themes = loadThemes();
-  sel.innerHTML = "";
-  for(const t of themes){
-    const opt = document.createElement("option");
-    opt.value = t.id;
-    opt.textContent = t.name;
-    sel.appendChild(opt);
-  }
-  const active = localStorage.getItem(LS.activeThemeId);
-  if(active && themes.some(t => t.id === active)) sel.value = active;
-}
-
-function applyActiveTheme(){
-  const themes = loadThemes();
-  const activeId = localStorage.getItem(LS.activeThemeId);
-  const t = themes.find(x => x.id === activeId);
-  if(t){
-    applyThemeVars(t.primary, t.surface);
-    $("#swatchPreview")?.querySelector(".swatch--primary")?.style.setProperty("background", t.primary);
-    $("#swatchPreview")?.querySelector(".swatch--surface")?.style.setProperty("background", t.surface);
-    $("#themePrimary").value = t.primary;
-    $("#themeSurface").value = t.surface;
-    $("#themeName").value = t.name;
-  }else{
-    // default preview
-    $("#swatchPreview")?.querySelector(".swatch--primary")?.style.setProperty("background", getComputedStyle(document.documentElement).getPropertyValue("--primary"));
-    $("#swatchPreview")?.querySelector(".swatch--surface")?.style.setProperty("background", getComputedStyle(document.documentElement).getPropertyValue("--surface"));
-  }
-}
-
-$("#btnApplyTheme").addEventListener("click", () => {
-  const p = normalizeHex($("#themePrimary").value || "#adcdea");
-  const s = normalizeHex($("#themeSurface").value || "#ffffff");
-  if(!isValidHex(p) || !isValidHex(s)){
-    alert("色号不合法。请使用 #RRGGBB 或 #RGB。");
-    return;
-  }
-  applyThemeVars(p, s);
-  applyActiveTheme(); // updates preview inputs if active exists
-});
-
-$("#btnSaveTheme").addEventListener("click", () => {
-  const name = ($("#themeName").value || "").trim() || "未命名主题";
-  const p = normalizeHex($("#themePrimary").value || "#adcdea");
-  const s = normalizeHex($("#themeSurface").value || "#ffffff");
-  if(!isValidHex(p) || !isValidHex(s)){
-    alert("色号不合法。");
-    return;
-  }
-  const themes = loadThemes();
-  const t = { id: crypto.randomUUID(), name, primary: p, surface: s, createdAt: Date.now() };
-  themes.unshift(t);
-  saveThemes(themes);
-  localStorage.setItem(LS.activeThemeId, t.id);
-  refreshThemeSelect();
-  applyActiveTheme();
-});
-
-$("#btnUseTheme").addEventListener("click", () => {
-  const id = $("#themeSelect").value;
-  if(!id) return;
-  localStorage.setItem(LS.activeThemeId, id);
-  applyActiveTheme();
-});
-
-$("#btnDeleteTheme").addEventListener("click", () => {
-  const id = $("#themeSelect").value;
-  if(!id) return;
-  const themes = loadThemes().filter(t => t.id !== id);
-  saveThemes(themes);
-  if(localStorage.getItem(LS.activeThemeId) === id){
-    localStorage.removeItem(LS.activeThemeId);
-  }
-  refreshThemeSelect();
-  applyActiveTheme();
-});
-
-/* ---------- Fonts (built-in + uploaded) ---------- */
-const CDN_FONTS = [
-  {
-    id: "system",
-    name: "系统默认",
-    css: null,
-    stack: `system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif`
-  },
-  {
-    id: "songti",
-    name: "宋体（系统）",
-    css: null,
-    stack: `"STSong", "Songti SC", "SimSun", "Noto Serif SC", serif`
-  },
-  {
-    id: "lxgwwenkai",
-    name: "霞鹜文楷（LXGW WenKai）",
-    css: "https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css",
-    stack: `"LXGW WenKai", "PingFang SC", "Noto Sans SC", serif`
-  },
-  {
-    id: "notosanssc",
-    name: "Noto Sans SC（思源黑体风格）",
-    css: "https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&display=swap",
-    stack: `"Noto Sans SC", "PingFang SC", system-ui, sans-serif`
-  }
-];
-
-function ensureCssLink(href){
-  if(!href) return;
-  const exists = $$("link[rel='stylesheet']").some(l => l.href === href);
-  if(exists) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = href;
-  document.head.appendChild(link);
-}
-
-function setUIFontStack(stack){
-  document.documentElement.style.setProperty("--font-ui", stack);
-}
-
-async function loadUploadedFontsIntoSelect(){
-  // Keys: font:<id> => { name, mime, data(Blob) }
-  const keys = await idbKeys();
-  const fontKeys = keys.filter(k => String(k).startsWith("font:"));
-  const fonts = [];
-  for(const k of fontKeys){
-    const meta = await idbGet(k);
-    if(meta && meta.name && meta.blob){
-      fonts.push({ key: k, name: meta.name, blob: meta.blob });
+      return s.toLowerCase();
     }
-  }
+    async function copyText(text){ await navigator.clipboard.writeText(text); }
 
-  // Add to select
-  const sel = $("#fontSelect");
-  sel.innerHTML = "";
-  // CDN/system
-  for(const f of CDN_FONTS){
-    const opt = document.createElement("option");
-    opt.value = f.id;
-    opt.textContent = f.name;
-    sel.appendChild(opt);
-  }
-  // Uploaded
-  for(const uf of fonts){
-    const opt = document.createElement("option");
-    opt.value = uf.key; // store key
-    opt.textContent = `${uf.name}（已上传）`;
-    sel.appendChild(opt);
-  }
+    /* ---------- IndexedDB ---------- */
+    const DB_NAME = "PureWebUI";
+    const DB_VERSION = 1;
+    const STORE_ASSETS = "assets";
 
-  const active = localStorage.getItem(LS.activeFont);
-  if(active) sel.value = active;
-}
-
-async function applyFontById(id){
-  // CDN/system
-  const builtin = CDN_FONTS.find(x => x.id === id);
-  if(builtin){
-    if(builtin.css) ensureCssLink(builtin.css);
-    setUIFontStack(builtin.stack);
-    localStorage.setItem(LS.activeFont, id);
-    return;
-  }
-
-  // Uploaded font: value is "font:<uuid>"
-  if(String(id).startsWith("font:")){
-    const meta = await idbGet(id);
-    if(!meta?.blob) throw new Error("字体数据不存在。");
-    const family = `UploadedFont_${id.replace("font:", "")}`;
-    const url = URL.createObjectURL(meta.blob);
-
-    // Inject @font-face
-    let style = document.getElementById("uploaded-font-style");
-    if(!style){
-      style = document.createElement("style");
-      style.id = "uploaded-font-style";
-      document.head.appendChild(style);
+    function openDB(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(STORE_ASSETS)){
+            db.createObjectStore(STORE_ASSETS);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
     }
-    style.textContent = `
-      @font-face{
-        font-family: "${family}";
-        src: url("${url}") format("truetype");
-        font-display: swap;
-      }
-    `;
-
-    setUIFontStack(`"${family}", system-ui, -apple-system, "PingFang SC", "Noto Sans SC", sans-serif`);
-    localStorage.setItem(LS.activeFont, id);
-    return;
-  }
-}
-
-$("#btnApplyFont").addEventListener("click", async () => {
-  const id = $("#fontSelect").value;
-  try{
-    await applyFontById(id);
-  }catch(err){
-    alert("字体应用失败：" + err.message);
-  }
-});
-
-$("#btnResetFont").addEventListener("click", () => {
-  localStorage.removeItem(LS.activeFont);
-  setUIFontStack(CDN_FONTS[0].stack);
-  $("#fontSelect").value = "system";
-});
-
-$("#btnSaveUploadedFont").addEventListener("click", async () => {
-  const file = $("#fontUpload").files?.[0];
-  if(!file){
-    alert("请先选择一个 .ttf 文件。");
-    return;
-  }
-  const displayName = ($("#fontUploadName").value || "").trim() || file.name.replace(/\.ttf$/i, "");
-  if(!/\.ttf$/i.test(file.name)){
-    alert("目前只支持 .ttf");
-    return;
-  }
-  const id = "font:" + crypto.randomUUID();
-  await idbSet(id, { name: displayName, blob: file });
-  await loadUploadedFontsIntoSelect();
-  $("#fontSelect").value = id;
-  await applyFontById(id);
-  $("#fontUpload").value = "";
-  $("#fontUploadName").value = "";
-});
-
-$("#btnClearUploadedFonts").addEventListener("click", async () => {
-  const keys = await idbKeys();
-  const fontKeys = keys.filter(k => String(k).startsWith("font:"));
-  for(const k of fontKeys) await idbDel(k);
-  await loadUploadedFontsIntoSelect();
-  localStorage.removeItem(LS.activeFont);
-  setUIFontStack(CDN_FONTS[0].stack);
-  $("#fontSelect").value = "system";
-});
-
-/* ---------- Background image (IndexedDB) ---------- */
-let pendingBgFile = null;
-
-$("#bgUpload").addEventListener("change", (e) => {
-  pendingBgFile = e.target.files?.[0] || null;
-});
-
-async function applyBackgroundFromBlob(blob){
-  if(!blob){
-    document.documentElement.style.setProperty("--bg-image", "none");
-    return;
-  }
-  const url = URL.createObjectURL(blob);
-  document.documentElement.style.setProperty("--bg-image", `url("${url}")`);
-}
-
-$("#btnApplyBg").addEventListener("click", async () => {
-  if(!pendingBgFile){
-    alert("请先选择一张图片。");
-    return;
-  }
-  await idbSet("bg:image", pendingBgFile);
-  await applyBackgroundFromBlob(pendingBgFile);
-  pendingBgFile = null;
-  $("#bgUpload").value = "";
-});
-
-$("#btnClearBg").addEventListener("click", async () => {
-  await idbDel("bg:image");
-  document.documentElement.style.setProperty("--bg-image", "none");
-});
-
-/* ---------- Note + Code pads ---------- */
-const notePad = $("#notePad");
-notePad.value = localStorage.getItem(LS.note) || "";
-notePad.addEventListener("input", () => {
-  localStorage.setItem(LS.note, notePad.value);
-});
-
-const codePad = $("#codePad");
-codePad.value = localStorage.getItem(LS.code) || "";
-codePad.addEventListener("input", () => {
-  localStorage.setItem(LS.code, codePad.value);
-});
-
-$("#btnCopyCode").addEventListener("click", async () => {
-  try{
-    await copyText(codePad.value);
-  }catch{
-    alert("复制失败：浏览器不允许或未授权。");
-  }
-});
-$("#btnClearCode").addEventListener("click", () => {
-  if(confirm("确定清空代码编辑器内容？")){
-    codePad.value = "";
-    localStorage.removeItem(LS.code);
-  }
-});
-
-/* ---------- API configs + fetch models ---------- */
-function loadApiConfigs(){
-  return safeJsonParse(localStorage.getItem(LS.apiConfigs), []);
-}
-function saveApiConfigs(list){
-  localStorage.setItem(LS.apiConfigs, JSON.stringify(list));
-}
-function refreshCfgSelect(){
-  const sel = $("#cfgSelect");
-  const list = loadApiConfigs();
-  sel.innerHTML = "";
-  for(const c of list){
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.name;
-    sel.appendChild(opt);
-  }
-  const active = localStorage.getItem(LS.activeCfgId);
-  if(active && list.some(c => c.id === active)) sel.value = active;
-}
-
-function setApiStatus(text){
-  $("#apiStatus").textContent = text || "";
-}
-
-function getSelectedCfgId(){
-  return $("#cfgSelect").value || "";
-}
-
-$("#btnSaveCfg").addEventListener("click", () => {
-  const name = ($("#cfgName").value || "").trim() || "未命名配置";
-  const baseUrl = ($("#cfgBaseUrl").value || "").trim();
-  const apiKey = ($("#cfgApiKey").value || "").trim();
-  const model = ($("#cfgModel").value || "").trim();
-
-  if(!baseUrl){
-    alert("Base URL 不能为空。");
-    return;
-  }
-  const cfg = { id: crypto.randomUUID(), name, baseUrl, apiKey, model, createdAt: Date.now() };
-  const list = loadApiConfigs();
-  list.unshift(cfg);
-  saveApiConfigs(list);
-  localStorage.setItem(LS.activeCfgId, cfg.id);
-  refreshCfgSelect();
-  setApiStatus("已保存配置。");
-});
-
-$("#btnUseCfg").addEventListener("click", () => {
-  const id = getSelectedCfgId();
-  if(!id) return;
-  localStorage.setItem(LS.activeCfgId, id);
-  const cfg = loadApiConfigs().find(c => c.id === id);
-  if(cfg){
-    $("#cfgName").value = cfg.name;
-    $("#cfgBaseUrl").value = cfg.baseUrl;
-    $("#cfgApiKey").value = cfg.apiKey;
-    // model stays in select, if exists
-    if(cfg.model){
-      const opt = Array.from($("#cfgModel").options).find(o => o.value === cfg.model);
-      if(opt) $("#cfgModel").value = cfg.model;
+    async function idbSet(key, value){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_ASSETS, "readwrite");
+        tx.objectStore(STORE_ASSETS).put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
     }
-  }
-  setApiStatus("已切换为该配置。");
-});
-
-$("#btnDeleteCfg").addEventListener("click", () => {
-  const id = getSelectedCfgId();
-  if(!id) return;
-  const list = loadApiConfigs().filter(c => c.id !== id);
-  saveApiConfigs(list);
-  if(localStorage.getItem(LS.activeCfgId) === id){
-    localStorage.removeItem(LS.activeCfgId);
-  }
-  refreshCfgSelect();
-  setApiStatus("已删除配置。");
-});
-
-async function fetchModels(baseUrl, apiKey){
-  // OpenAI-style: GET {baseUrl}/v1/models
-  const url = baseUrl.replace(/\/+$/, "") + "/v1/models";
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { "Authorization": `Bearer ${apiKey}` } : {})
+    async function idbGet(key){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_ASSETS, "readonly");
+        const req = tx.objectStore(STORE_ASSETS).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
     }
-  });
-  if(!res.ok){
-    const t = await res.text().catch(()=> "");
-    throw new Error(`请求失败：${res.status} ${res.statusText}\n${t.slice(0,200)}`);
-  }
-  const json = await res.json();
-  // Expect {data:[{id:"..."}]}
-  const arr = json?.data || [];
-  return arr.map(x => x.id).filter(Boolean);
-}
-
-$("#btnFetchModels").addEventListener("click", async () => {
-  setApiStatus("正在抓取模型列表……");
-  const baseUrl = ($("#cfgBaseUrl").value || "").trim();
-  const apiKey = ($("#cfgApiKey").value || "").trim();
-  if(!baseUrl){
-    alert("请填写 Base URL。");
-    setApiStatus("");
-    return;
-  }
-  try{
-    const models = await fetchModels(baseUrl, apiKey);
-    const sel = $("#cfgModel");
-    sel.innerHTML = "";
-    for(const m of models){
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      sel.appendChild(opt);
+    async function idbDel(key){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_ASSETS, "readwrite");
+        tx.objectStore(STORE_ASSETS).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
     }
-    setApiStatus(`抓取成功：共 ${models.length} 个模型。`);
-  }catch(err){
-    setApiStatus("抓取失败：" + err.message);
-  }
-});
-
-/* ---------- Role app (create & manage) ---------- */
-function loadRoles(){
-  return safeJsonParse(localStorage.getItem(LS.roles), []);
-}
-function saveRoles(list){
-  localStorage.setItem(LS.roles, JSON.stringify(list));
-}
-
-function renderRoles(){
-  const grid = $("#roleGrid");
-  const roles = loadRoles();
-  $("#roleEmptyHint").style.display = roles.length ? "none" : "block";
-
-  // Remove old role items
-  $$(".role-item", grid).forEach(x => x.remove());
-
-  roles.forEach((r, idx) => {
-    const item = document.createElement("div");
-    item.className = "role-item";
-
-    const avatar = document.createElement("button");
-    avatar.type = "button";
-    avatar.className = "avatar";
-    avatar.setAttribute("aria-label", "上传角色头像");
-
-    const plus = document.createElement("div");
-    plus.className = "plus";
-    plus.textContent = "+";
-    avatar.appendChild(plus);
-
-    // Load avatar if exists
-    if(r.avatarKey){
-      idbGet(r.avatarKey).then(blob => {
-        if(blob){
-          avatar.innerHTML = "";
-          const img = document.createElement("img");
-          img.src = URL.createObjectURL(blob);
-          img.alt = "";
-          avatar.appendChild(img);
-        }
+    async function idbKeys(){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_ASSETS, "readonly");
+        const store = tx.objectStore(STORE_ASSETS);
+        const req = store.getAllKeys();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
       });
     }
 
-    avatar.addEventListener("click", async () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if(!file) return;
-        const roles2 = loadRoles();
-        const role = roles2.find(x => x.id === r.id);
-        if(!role) return;
-        // Save avatar
-        const key = role.avatarKey || ("avatar:" + crypto.randomUUID());
-        await idbSet(key, file);
-        role.avatarKey = key;
-        saveRoles(roles2);
-        renderRoles();
-      };
-      input.click();
+    /* ---------- Storage keys ---------- */
+    const LS = {
+      apiConfigs: "pw_api_configs",
+      activeCfgId: "pw_api_active",
+      themes: "pw_themes",
+      activeThemeId: "pw_theme_active",
+      activeFont: "pw_font_active",
+      note: "pw_note",
+      code: "pw_code",
+      roles: "pw_roles",
+    };
+
+    /* ---------- Navigation ---------- */
+    function showScreen(id){
+      $$(".screen").forEach(s => s.classList.remove("is-active"));
+      const el = document.getElementById(id);
+      if(el) el.classList.add("is-active");
+      window.scrollTo({top: 0, behavior: "instant"});
+    }
+
+    /* ---------- Assistive ball ---------- */
+    const ball = $("#assistiveBall");
+    const panel = $("#assistivePanel");
+
+    let dragging = false, moved = false;
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    function getBallPos(){
+      const rect = ball.getBoundingClientRect();
+      return { left: rect.left, top: rect.top };
+    }
+    function setBallPos(left, top){
+      const maxLeft = window.innerWidth - ball.offsetWidth - 8;
+      const maxTop = window.innerHeight - ball.offsetHeight - 8;
+      ball.style.left = clamp(left, 8, maxLeft) + "px";
+      ball.style.top = clamp(top, 8, maxTop) + "px";
+      ball.style.right = "auto";
+      ball.style.bottom = "auto";
+    }
+
+    ball.addEventListener("pointerdown", (e) => {
+      dragging = true; moved = false;
+      ball.setPointerCapture(e.pointerId);
+      const pos = getBallPos();
+      startLeft = pos.left; startTop = pos.top;
+      startX = e.clientX; startY = e.clientY;
+    });
+    ball.addEventListener("pointermove", (e) => {
+      if(!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if(Math.abs(dx) + Math.abs(dy) > 6) moved = true;
+      setBallPos(startLeft + dx, startTop + dy);
+    });
+    ball.addEventListener("pointerup", () => {
+      dragging = false;
+      if(!moved) openPanel();
     });
 
-    const nameBtn = document.createElement("button");
-    nameBtn.type = "button";
-    nameBtn.className = "role-name-btn";
-    nameBtn.textContent = r.name || `角色${idx+1}`;
-    nameBtn.addEventListener("click", () => openRoleDetail(r));
-
-    item.appendChild(avatar);
-    item.appendChild(nameBtn);
-    grid.appendChild(item);
-  });
-}
-
-function openRoleDetail(role){
-  const modal = $("#modal");
-  $("#modalTitle").textContent = role.name || "角色详情";
-  const text = [
-    `名称：${role.name || ""}`,
-    `年龄：${role.age || ""}`,
-    `身高：${role.height || ""} cm`,
-    `性别：${role.sex || ""}`,
-    "",
-    "形象资料：",
-    role.profile || ""
-  ].join("\n");
-  $("#modalBody").textContent = text;
-  modal.classList.add("is-open");
-  modal.setAttribute("aria-hidden", "false");
-
-  $("#btnCopyRole").onclick = async () => {
-    try{
-      await copyText(text);
-      alert("已复制。");
-    }catch{
-      alert("复制失败：浏览器不允许或未授权。");
+    function openPanel(){
+      panel.classList.add("is-open");
+      panel.setAttribute("aria-hidden", "false");
     }
-  };
-}
+    function closePanel(){
+      panel.classList.remove("is-open");
+      panel.setAttribute("aria-hidden", "true");
+    }
 
-function closeModal(){
-  const modal = $("#modal");
-  modal.classList.remove("is-open");
-  modal.setAttribute("aria-hidden", "true");
-}
+    panel.addEventListener("click", (e) => {
+      const close = e.target?.getAttribute?.("data-close");
+      if(close === "panel") closePanel();
+    });
+    $$("[data-close='panel']").forEach(btn => btn.addEventListener("click", closePanel));
 
-$("#modal").addEventListener("click", (e) => {
-  const close = e.target?.getAttribute?.("data-close");
-  if(close === "modal") closeModal();
-});
-$$("[data-close='modal']").forEach(btn => btn.addEventListener("click", closeModal));
+    /* ---------- Tabs ---------- */
+    $$(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        $$(".tab").forEach(x => x.classList.remove("is-active"));
+        $$(".tabpane").forEach(x => x.classList.remove("is-active"));
+        t.classList.add("is-active");
+        const name = t.getAttribute("data-tab");
+        $(`.tabpane[data-pane="${name}"]`)?.classList.add("is-active");
+      });
+    });
 
-/* Role create flow state */
-let draftRole = null;
+    /* ---------- Theme ---------- */
+    function applyThemeVars(primary, surface){
+      document.documentElement.style.setProperty("--primary", primary);
+      document.documentElement.style.setProperty("--surface", surface);
+    }
+    function loadThemes(){ return safeJsonParse(localStorage.getItem(LS.themes), []); }
+    function saveThemes(themes){ localStorage.setItem(LS.themes, JSON.stringify(themes)); }
 
-$("#openRoleApp").addEventListener("click", () => {
-  showScreen("screen-role-1");
-  renderRoles();
-});
+    function refreshThemeSelect(){
+      const sel = $("#themeSelect");
+      const themes = loadThemes();
+      sel.innerHTML = "";
+      for(const t of themes){
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      }
+      const active = localStorage.getItem(LS.activeThemeId);
+      if(active && themes.some(t => t.id === active)) sel.value = active;
+    }
 
-$("#btnExitToHome").addEventListener("click", () => showScreen("screen-home"));
+    function applyActiveTheme(){
+      const themes = loadThemes();
+      const activeId = localStorage.getItem(LS.activeThemeId);
+      const t = themes.find(x => x.id === activeId);
+      if(t){
+        applyThemeVars(t.primary, t.surface);
+        $("#themePrimary").value = t.primary;
+        $("#themeSurface").value = t.surface;
+        $("#themeName").value = t.name;
+      }
+    }
 
-$("#btnCreateRole").addEventListener("click", () => {
-  draftRole = {
-    id: crypto.randomUUID(),
-    name: "",
-    age: "",
-    height: "",
-    sex: "女",
-    profile: "",
-    avatarKey: ""
-  };
-  // defaults
-  $("#roleName").value = "";
-  $("#roleAge").value = "";
-  $("#roleHeight").value = "";
-  $$("input[name='roleSex']").forEach(r => r.checked = (r.value === "女"));
+    $("#btnApplyTheme").addEventListener("click", () => {
+      const p = normalizeHex($("#themePrimary").value || "#adcdea");
+      const s = normalizeHex($("#themeSurface").value || "#ffffff");
+      if(!isValidHex(p) || !isValidHex(s)){
+        alert("色号不合法。请使用 #RRGGBB 或 #RGB。");
+        return;
+      }
+      applyThemeVars(p, s);
+    });
 
-  showScreen("screen-role-2");
-});
+    $("#btnSaveTheme").addEventListener("click", () => {
+      const name = ($("#themeName").value || "").trim() || "未命名主题";
+      const p = normalizeHex($("#themePrimary").value || "#adcdea");
+      const s = normalizeHex($("#themeSurface").value || "#ffffff");
+      if(!isValidHex(p) || !isValidHex(s)){
+        alert("色号不合法。");
+        return;
+      }
+      const themes = loadThemes();
+      const t = { id: crypto.randomUUID(), name, primary: p, surface: s, createdAt: Date.now() };
+      themes.unshift(t);
+      saveThemes(themes);
+      localStorage.setItem(LS.activeThemeId, t.id);
+      refreshThemeSelect();
+      applyActiveTheme();
+    });
 
-$("#btnBackToRole1").addEventListener("click", () => showScreen("screen-role-1"));
+    $("#btnUseTheme").addEventListener("click", () => {
+      const id = $("#themeSelect").value;
+      if(!id) return;
+      localStorage.setItem(LS.activeThemeId, id);
+      applyActiveTheme();
+    });
 
-$("#btnToRole3").addEventListener("click", () => {
-  if(!draftRole) draftRole = { id: crypto.randomUUID() };
+    $("#btnDeleteTheme").addEventListener("click", () => {
+      const id = $("#themeSelect").value;
+      if(!id) return;
+      const themes = loadThemes().filter(t => t.id !== id);
+      saveThemes(themes);
+      if(localStorage.getItem(LS.activeThemeId) === id){
+        localStorage.removeItem(LS.activeThemeId);
+      }
+      refreshThemeSelect();
+      applyActiveTheme();
+    });
 
-  draftRole.name = ($("#roleName").value || "").trim();
-  draftRole.age = ($("#roleAge").value || "").trim();
-  draftRole.height = ($("#roleHeight").value || "").trim();
-  const sex = ($$("input[name='roleSex']").find(r => r.checked)?.value) || "女";
-  draftRole.sex = sex;
+    /* ---------- Fonts ---------- */
+    const CDN_FONTS = [
+      {
+        id: "system",
+        name: "系统默认",
+        css: null,
+        stack: `system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif`
+      },
+      {
+        id: "songti",
+        name: "宋体（系统）",
+        css: null,
+        stack: `"STSong", "Songti SC", "SimSun", "Noto Serif SC", serif`
+      },
+      {
+        id: "lxgwwenkai",
+        name: "霞鹜文楷（LXGW WenKai）",
+        css: "https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css",
+        stack: `"LXGW WenKai", "PingFang SC", "Noto Sans SC", serif`
+      },
+      {
+        id: "notosanssc",
+        name: "Noto Sans SC（思源黑体风格）",
+        css: "https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&display=swap",
+        stack: `"Noto Sans SC", "PingFang SC", system-ui, sans-serif`
+      }
+    ];
 
-  if(!draftRole.name){
-    alert("名称不能为空。");
-    return;
-  }
+    function ensureCssLink(href){
+      if(!href) return;
+      const exists = $$("link[rel='stylesheet']").some(l => l.href === href);
+      if(exists) return;
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    }
 
-  // reset page 3
-  $("#roleProfile").value = "";
-  $("#roleWordCount").value = "120";
-  showScreen("screen-role-3");
-});
+    function setUIFontStack(stack){
+      document.documentElement.style.setProperty("--font-ui", stack);
+    }
 
-$("#btnBackToRole2").addEventListener("click", () => showScreen("screen-role-2"));
+    async function loadUploadedFontsIntoSelect(){
+      const keys = await idbKeys();
+      const fontKeys = keys.filter(k => String(k).startsWith("font:"));
+      const fonts = [];
+      for(const k of fontKeys){
+        const meta = await idbGet(k);
+        if(meta && meta.name && meta.blob){
+          fonts.push({ key: k, name: meta.name, blob: meta.blob });
+        }
+      }
 
-/* Pickers data */
-const PICKERS = {
-  eye: [
-    { value: "杏眼", desc: "清澈温柔，亲和力强，容易给人“想靠近”的感觉。" },
-    { value: "桃花眼", desc: "眼尾微扬，神采灵动，气质更显主动与明媚。" },
-    { value: "丹凤眼", desc: "线条利落，气场更强，成熟感与距离感并存。" },
-    { value: "圆眼", desc: "少年感更重，显得更无辜、更可爱。" },
-    { value: "瑞凤眼", desc: "眼形更修长，细节耐看，偏清冷高级。" },
-  ],
-  hair: [
-    { value: "短发", desc: "干净利落，行动感更强，整体更俏皮或飒爽。" },
-    { value: "及肩", desc: "平衡感强，清爽又不失柔和，适配度很高。" },
-    { value: "长发", desc: "更有氛围与故事感，风格可以从温柔到神秘。" },
-    { value: "及腰", desc: "存在感强，适合强调仪态与古典气质。" },
-  ],
-  shape: [
-    { value: "纤细", desc: "轻盈感强，轮廓更显精致，风格更清冷或文艺。" },
-    { value: "匀称", desc: "比例自然耐看，给人健康舒展的印象。" },
-    { value: "丰润", desc: "更显成熟与柔和，整体氛围更温暖。" },
-    { value: "运动型", desc: "肌肉线条更明显，力量感与自信更突出。" },
-  ],
-  scent: [
-    { value: "清茶", desc: "干净、克制、舒缓，靠近时有“安心”的感觉。" },
-    { value: "栀子", desc: "明亮清甜，温柔里带一点坚定。" },
-    { value: "木质", desc: "低调沉稳，更显可靠与距离感。" },
-    { value: "白皂", desc: "极简、纯净，像刚洗过的阳光和棉布。" },
-    { value: "果香", desc: "活泼、轻快，氛围更年轻、更亲近。" },
-  ]
-};
+      const sel = $("#fontSelect");
+      sel.innerHTML = "";
+      for(const f of CDN_FONTS){
+        const opt = document.createElement("option");
+        opt.value = f.id;
+        opt.textContent = f.name;
+        sel.appendChild(opt);
+      }
+      for(const uf of fonts){
+        const opt = document.createElement("option");
+        opt.value = uf.key;
+        opt.textContent = `${uf.name}（已上传）`;
+        sel.appendChild(opt);
+      }
 
-const pickerIndex = { eye: 0, hair: 1, shape: 1, scent: 0 };
+      const active = localStorage.getItem(LS.activeFont);
+      if(active) sel.value = active;
+    }
 
-function refreshPickerUI(){
-  $("#pickEyeValue").textContent = PICKERS.eye[pickerIndex.eye].value;
-  $("#pickHairValue").textContent = PICKERS.hair[pickerIndex.hair].value;
-  $("#pickShapeValue").textContent = PICKERS.shape[pickerIndex.shape].value;
-  $("#pickScentValue").textContent = PICKERS.scent[pickerIndex.scent].value;
-}
-refreshPickerUI();
+    async function applyFontById(id){
+      const builtin = CDN_FONTS.find(x => x.id === id);
+      if(builtin){
+        if(builtin.css) ensureCssLink(builtin.css);
+        setUIFontStack(builtin.stack);
+        localStorage.setItem(LS.activeFont, id);
+        return;
+      }
+      if(String(id).startsWith("font:")){
+        const meta = await idbGet(id);
+        if(!meta?.blob) throw new Error("字体数据不存在。");
+        const family = `UploadedFont_${id.replace("font:", "")}`;
+        const url = URL.createObjectURL(meta.blob);
 
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  if(!btn) return;
+        let style = document.getElementById("uploaded-font-style");
+        if(!style){
+          style = document.createElement("style");
+          style.id = "uploaded-font-style";
+          document.head.appendChild(style);
+        }
+        style.textContent = `
+          @font-face{
+            font-family: "${family}";
+            src: url("${url}") format("truetype");
+            font-display: swap;
+          }
+        `;
+        setUIFontStack(`"${family}", system-ui, -apple-system, "PingFang SC", "Noto Sans SC", sans-serif`);
+        localStorage.setItem(LS.activeFont, id);
+      }
+    }
 
-  const picker = btn.getAttribute("data-picker");
-  const dir = Number(btn.getAttribute("data-dir"));
-  if(picker && Number.isFinite(dir)){
-    const arr = PICKERS[picker];
-    pickerIndex[picker] = (pickerIndex[picker] + dir + arr.length) % arr.length;
+    $("#btnApplyFont").addEventListener("click", async () => {
+      const id = $("#fontSelect").value;
+      try{ await applyFontById(id); }
+      catch(err){ alert("字体应用失败：" + err.message); }
+    });
+
+    $("#btnResetFont").addEventListener("click", () => {
+      localStorage.removeItem(LS.activeFont);
+      setUIFontStack(CDN_FONTS[0].stack);
+      $("#fontSelect").value = "system";
+    });
+
+    $("#btnSaveUploadedFont").addEventListener("click", async () => {
+      const file = $("#fontUpload").files?.[0];
+      if(!file){ alert("请先选择一个 .ttf 文件。"); return; }
+      const displayName = ($("#fontUploadName").value || "").trim() || file.name.replace(/\.ttf$/i, "");
+      if(!/\.ttf$/i.test(file.name)){ alert("目前只支持 .ttf"); return; }
+      const id = "font:" + crypto.randomUUID();
+      await idbSet(id, { name: displayName, blob: file });
+      await loadUploadedFontsIntoSelect();
+      $("#fontSelect").value = id;
+      await applyFontById(id);
+      $("#fontUpload").value = "";
+      $("#fontUploadName").value = "";
+    });
+
+    $("#btnClearUploadedFonts").addEventListener("click", async () => {
+      const keys = await idbKeys();
+      const fontKeys = keys.filter(k => String(k).startsWith("font:"));
+      for(const k of fontKeys) await idbDel(k);
+      await loadUploadedFontsIntoSelect();
+      localStorage.removeItem(LS.activeFont);
+      setUIFontStack(CDN_FONTS[0].stack);
+      $("#fontSelect").value = "system";
+    });
+
+    /* ---------- Background ---------- */
+    let pendingBgFile = null;
+    $("#bgUpload").addEventListener("change", (e) => {
+      pendingBgFile = e.target.files?.[0] || null;
+    });
+
+    async function applyBackgroundFromBlob(blob){
+      if(!blob){
+        document.documentElement.style.setProperty("--bg-image", "none");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      document.documentElement.style.setProperty("--bg-image", `url("${url}")`);
+    }
+
+    $("#btnApplyBg").addEventListener("click", async () => {
+      if(!pendingBgFile){ alert("请先选择一张图片。"); return; }
+      await idbSet("bg:image", pendingBgFile);
+      await applyBackgroundFromBlob(pendingBgFile);
+      pendingBgFile = null;
+      $("#bgUpload").value = "";
+    });
+
+    $("#btnClearBg").addEventListener("click", async () => {
+      await idbDel("bg:image");
+      document.documentElement.style.setProperty("--bg-image", "none");
+    });
+
+    /* ---------- Note + Code ---------- */
+    const notePad = $("#notePad");
+    notePad.value = localStorage.getItem(LS.note) || "";
+    notePad.addEventListener("input", () => localStorage.setItem(LS.note, notePad.value));
+
+    const codePad = $("#codePad");
+    codePad.value = localStorage.getItem(LS.code) || "";
+    codePad.addEventListener("input", () => localStorage.setItem(LS.code, codePad.value));
+
+    $("#btnCopyCode").addEventListener("click", async () => {
+      try{ await copyText(codePad.value); }
+      catch{ alert("复制失败：浏览器不允许或未授权。"); }
+    });
+    $("#btnClearCode").addEventListener("click", () => {
+      if(confirm("确定清空代码编辑器内容？")){
+        codePad.value = "";
+        localStorage.removeItem(LS.code);
+      }
+    });
+
+    /* ---------- API configs + fetch models ---------- */
+    function loadApiConfigs(){ return safeJsonParse(localStorage.getItem(LS.apiConfigs), []); }
+    function saveApiConfigs(list){ localStorage.setItem(LS.apiConfigs, JSON.stringify(list)); }
+
+    function refreshCfgSelect(){
+      const sel = $("#cfgSelect");
+      const list = loadApiConfigs();
+      sel.innerHTML = "";
+      for(const c of list){
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+      const active = localStorage.getItem(LS.activeCfgId);
+      if(active && list.some(c => c.id === active)) sel.value = active;
+    }
+
+    function setApiStatus(text){ $("#apiStatus").textContent = text || ""; }
+    function getSelectedCfgId(){ return $("#cfgSelect").value || ""; }
+
+    $("#btnSaveCfg").addEventListener("click", () => {
+      const name = ($("#cfgName").value || "").trim() || "未命名配置";
+      const baseUrl = ($("#cfgBaseUrl").value || "").trim();
+      const apiKey = ($("#cfgApiKey").value || "").trim();
+      const model = ($("#cfgModel").value || "").trim();
+
+      if(!baseUrl){ alert("Base URL 不能为空。"); return; }
+      const cfg = { id: crypto.randomUUID(), name, baseUrl, apiKey, model, createdAt: Date.now() };
+      const list = loadApiConfigs();
+      list.unshift(cfg);
+      saveApiConfigs(list);
+      localStorage.setItem(LS.activeCfgId, cfg.id);
+      refreshCfgSelect();
+      setApiStatus("已保存配置。");
+    });
+
+    $("#btnUseCfg").addEventListener("click", () => {
+      const id = getSelectedCfgId();
+      if(!id) return;
+      localStorage.setItem(LS.activeCfgId, id);
+      const cfg = loadApiConfigs().find(c => c.id === id);
+      if(cfg){
+        $("#cfgName").value = cfg.name;
+        $("#cfgBaseUrl").value = cfg.baseUrl;
+        $("#cfgApiKey").value = cfg.apiKey;
+        if(cfg.model){
+          const opt = Array.from($("#cfgModel").options).find(o => o.value === cfg.model);
+          if(opt) $("#cfgModel").value = cfg.model;
+        }
+      }
+      setApiStatus("已切换为该配置。");
+    });
+
+    $("#btnDeleteCfg").addEventListener("click", () => {
+      const id = getSelectedCfgId();
+      if(!id) return;
+      const list = loadApiConfigs().filter(c => c.id !== id);
+      saveApiConfigs(list);
+      if(localStorage.getItem(LS.activeCfgId) === id){
+        localStorage.removeItem(LS.activeCfgId);
+      }
+      refreshCfgSelect();
+      setApiStatus("已删除配置。");
+    });
+
+    async function fetchModels(baseUrl, apiKey){
+      const url = baseUrl.replace(/\/+$/, "") + "/v1/models";
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey ? { "Authorization": `Bearer ${apiKey}` } : {})
+        }
+      });
+      if(!res.ok){
+        const t = await res.text().catch(()=> "");
+        throw new Error(`请求失败：${res.status} ${res.statusText}\n${t.slice(0,200)}`);
+      }
+      const json = await res.json();
+      const arr = json?.data || [];
+      return arr.map(x => x.id).filter(Boolean);
+    }
+
+    $("#btnFetchModels").addEventListener("click", async () => {
+      setApiStatus("正在抓取模型列表……");
+      const baseUrl = ($("#cfgBaseUrl").value || "").trim();
+      const apiKey = ($("#cfgApiKey").value || "").trim();
+      if(!baseUrl){ alert("请填写 Base URL。"); setApiStatus(""); return; }
+      try{
+        const models = await fetchModels(baseUrl, apiKey);
+        const sel = $("#cfgModel");
+        sel.innerHTML = "";
+        for(const m of models){
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m;
+          sel.appendChild(opt);
+        }
+        setApiStatus(`抓取成功：共 ${models.length} 个模型。`);
+      }catch(err){
+        setApiStatus("抓取失败：" + err.message);
+      }
+    });
+
+    /* ---------- Roles ---------- */
+    function loadRoles(){ return safeJsonParse(localStorage.getItem(LS.roles), []); }
+    function saveRoles(list){ localStorage.setItem(LS.roles, JSON.stringify(list)); }
+
+    function renderRoles(){
+      const grid = $("#roleGrid");
+      const roles = loadRoles();
+      $("#roleEmptyHint").style.display = roles.length ? "none" : "block";
+      $$(".role-item", grid).forEach(x => x.remove());
+
+      roles.forEach((r, idx) => {
+        const item = document.createElement("div");
+        item.className = "role-item";
+
+        const avatar = document.createElement("button");
+        avatar.type = "button";
+        avatar.className = "avatar";
+        avatar.setAttribute("aria-label", "上传角色头像");
+
+        const plus = document.createElement("div");
+        plus.className = "plus";
+        plus.textContent = "+";
+        avatar.appendChild(plus);
+
+        if(r.avatarKey){
+          idbGet(r.avatarKey).then(blob => {
+            if(blob){
+              avatar.innerHTML = "";
+              const img = document.createElement("img");
+              img.src = URL.createObjectURL(blob);
+              img.alt = "";
+              avatar.appendChild(img);
+            }
+          });
+        }
+
+        avatar.addEventListener("click", async () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+          input.onchange = async () => {
+            const file = input.files?.[0];
+            if(!file) return;
+            const roles2 = loadRoles();
+            const role = roles2.find(x => x.id === r.id);
+            if(!role) return;
+            const key = role.avatarKey || ("avatar:" + crypto.randomUUID());
+            await idbSet(key, file);
+            role.avatarKey = key;
+            saveRoles(roles2);
+            renderRoles();
+          };
+          input.click();
+        });
+
+        const nameBtn = document.createElement("button");
+        nameBtn.type = "button";
+        nameBtn.className = "role-name-btn";
+        nameBtn.textContent = r.name || `角色${idx+1}`;
+        nameBtn.addEventListener("click", () => openRoleDetail(r));
+
+        item.appendChild(avatar);
+        item.appendChild(nameBtn);
+        grid.appendChild(item);
+      });
+    }
+
+    function openRoleDetail(role){
+      const modal = $("#modal");
+      $("#modalTitle").textContent = role.name || "角色详情";
+      const text = [
+        `名称：${role.name || ""}`,
+        `年龄：${role.age || ""}`,
+        `身高：${role.height || ""} cm`,
+        `性别：${role.sex || ""}`,
+        "",
+        "形象资料：",
+        role.profile || ""
+      ].join("\n");
+      $("#modalBody").textContent = text;
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+
+      $("#btnCopyRole").onclick = async () => {
+        try{ await copyText(text); alert("已复制。"); }
+        catch{ alert("复制失败：浏览器不允许或未授权。"); }
+      };
+    }
+
+    function closeModal(){
+      const modal = $("#modal");
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    $("#modal").addEventListener("click", (e) => {
+      const close = e.target?.getAttribute?.("data-close");
+      if(close === "modal") closeModal();
+    });
+    $$("[data-close='modal']").forEach(btn => btn.addEventListener("click", closeModal));
+
+    let draftRole = null;
+
+    $("#openRoleApp").addEventListener("click", () => {
+      showScreen("screen-role-1");
+      renderRoles();
+    });
+    $("#btnExitToHome").addEventListener("click", () => showScreen("screen-home"));
+
+    $("#btnCreateRole").addEventListener("click", () => {
+      draftRole = { id: crypto.randomUUID(), name:"", age:"", height:"", sex:"女", profile:"", avatarKey:"" };
+      $("#roleName").value = "";
+      $("#roleAge").value = "";
+      $("#roleHeight").value = "";
+      $$("input[name='roleSex']").forEach(r => r.checked = (r.value === "女"));
+      showScreen("screen-role-2");
+    });
+
+    $("#btnBackToRole1").addEventListener("click", () => showScreen("screen-role-1"));
+
+    $("#btnToRole3").addEventListener("click", () => {
+      if(!draftRole) draftRole = { id: crypto.randomUUID() };
+      draftRole.name = ($("#roleName").value || "").trim();
+      draftRole.age = ($("#roleAge").value || "").trim();
+      draftRole.height = ($("#roleHeight").value || "").trim();
+      draftRole.sex = ($$("input[name='roleSex']").find(r => r.checked)?.value) || "女";
+
+      if(!draftRole.name){ alert("名称不能为空。"); return; }
+      $("#roleProfile").value = "";
+      $("#roleWordCount").value = "120";
+      showScreen("screen-role-3");
+    });
+
+    $("#btnBackToRole2").addEventListener("click", () => showScreen("screen-role-2"));
+
+    const PICKERS = {
+      eye: [
+        { value: "杏眼", desc: "清澈温柔，亲和力强，容易给人“想靠近”的感觉。" },
+        { value: "桃花眼", desc: "眼尾微扬，神采灵动，气质更显主动与明媚。" },
+        { value: "丹凤眼", desc: "线条利落，气场更强，成熟感与距离感并存。" },
+        { value: "圆眼", desc: "少年感更重，显得更无辜、更可爱。" },
+        { value: "瑞凤眼", desc: "眼形更修长，细节耐看，偏清冷高级。" },
+      ],
+      hair: [
+        { value: "短发", desc: "干净利落，行动感更强，整体更俏皮或飒爽。" },
+        { value: "及肩", desc: "平衡感强，清爽又不失柔和，适配度很高。" },
+        { value: "长发", desc: "更有氛围与故事感，风格可以从温柔到神秘。" },
+        { value: "及腰", desc: "存在感强，适合强调仪态与古典气质。" },
+      ],
+      shape: [
+        { value: "纤细", desc: "轻盈感强，轮廓更显精致，风格更清冷或文艺。" },
+        { value: "匀称", desc: "比例自然耐看，给人健康舒展的印象。" },
+        { value: "丰润", desc: "更显成熟与柔和，整体氛围更温暖。" },
+        { value: "运动型", desc: "肌肉线条更明显，力量感与自信更突出。" },
+      ],
+      scent: [
+        { value: "清茶", desc: "干净、克制、舒缓，靠近时有“安心”的感觉。" },
+        { value: "栀子", desc: "明亮清甜，温柔里带一点坚定。" },
+        { value: "木质", desc: "低调沉稳，更显可靠与距离感。" },
+        { value: "白皂", desc: "极简、纯净，像刚洗过的阳光和棉布。" },
+        { value: "果香", desc: "活泼、轻快，氛围更年轻、更亲近。" },
+      ]
+    };
+    const pickerIndex = { eye: 0, hair: 1, shape: 1, scent: 0 };
+
+    function refreshPickerUI(){
+      $("#pickEyeValue").textContent = PICKERS.eye[pickerIndex.eye].value;
+      $("#pickHairValue").textContent = PICKERS.hair[pickerIndex.hair].value;
+      $("#pickShapeValue").textContent = PICKERS.shape[pickerIndex.shape].value;
+      $("#pickScentValue").textContent = PICKERS.scent[pickerIndex.scent].value;
+    }
     refreshPickerUI();
-    return;
-  }
 
-  const info = btn.getAttribute("data-info");
-  if(info){
-    const arr = PICKERS[info];
-    const idx = pickerIndex[info];
-    alert(`${arr[idx].value}\n\n${arr[idx].desc}`);
-  }
-});
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
 
-function generateProfileText(){
-  const wc = parseInt($("#roleWordCount").value || "120", 10);
-  const target = Number.isFinite(wc) ? clamp(wc, 40, 600) : 120;
+      const picker = btn.getAttribute("data-picker");
+      const dir = Number(btn.getAttribute("data-dir"));
+      if(picker && Number.isFinite(dir)){
+        const arr = PICKERS[picker];
+        pickerIndex[picker] = (pickerIndex[picker] + dir + arr.length) % arr.length;
+        refreshPickerUI();
+        return;
+      }
 
-  const eye = PICKERS.eye[pickerIndex.eye].value;
-  const hair = PICKERS.hair[pickerIndex.hair].value;
-  const shape = PICKERS.shape[pickerIndex.shape].value;
-  const scent = PICKERS.scent[pickerIndex.scent].value;
+      const info = btn.getAttribute("data-info");
+      if(info){
+        const arr = PICKERS[info];
+        const idx = pickerIndex[info];
+        alert(`${arr[idx].value}\n\n${arr[idx].desc}`);
+      }
+    });
 
-  const base = [
-    `她的眼型是${eye}，神采克制却很有记忆点。`,
-    `发型为${hair}，整体气质更显干净利落。`,
-    `身材曲线偏${shape}，比例自然，细节处很耐看。`,
-    `靠近时能闻到淡淡的${scent}气息，让人不自觉放松。`,
-    `五官与体态协调，整体观感“精致但不刻意”。`,
-    `说话时语速不快，表达清晰，有一种让人愿意倾听的稳定感。`,
-  ];
+    function generateProfileText(){
+      const wc = parseInt($("#roleWordCount").value || "120", 10);
+      const target = Number.isFinite(wc) ? clamp(wc, 40, 600) : 120;
 
-  // Expand/contract to approximate target length
-  let text = `【基础信息】\n名称：${draftRole?.name || ""}\n年龄：${draftRole?.age || ""}\n身高：${draftRole?.height || ""}cm\n性别：${draftRole?.sex || ""}\n\n【形象设定】\n` +
-    base.join("");
+      const eye = PICKERS.eye[pickerIndex.eye].value;
+      const hair = PICKERS.hair[pickerIndex.hair].value;
+      const shape = PICKERS.shape[pickerIndex.shape].value;
+      const scent = PICKERS.scent[pickerIndex.scent].value;
 
-  const filler = [
-    "她偏爱简洁的配色与细节克制的装饰，给人温柔但有边界的印象。",
-    "她的站姿很稳，走路时步幅不大，却有明确的目的感。",
-    "她不需要夸张的装饰来证明存在感，反而越素越显得高级。",
-    "她与人相处时保持礼貌距离，但一旦信任就会表现出很细腻的体贴。",
-  ];
+      const base = [
+        `她的眼型是${eye}，神采克制却很有记忆点。`,
+        `发型为${hair}，整体气质更显干净利落。`,
+        `身材曲线偏${shape}，比例自然，细节处很耐看。`,
+        `靠近时能闻到淡淡的${scent}气息，让人不自觉放松。`,
+        `五官与体态协调，整体观感“精致但不刻意”。`,
+        `说话时语速不快，表达清晰，有一种让人愿意倾听的稳定感。`,
+      ];
 
-  while(text.length < target){
-    text += filler[Math.floor(Math.random()*filler.length)];
-  }
-  // Trim if too long
-  if(text.length > target + 80){
-    text = text.slice(0, target + 60) + "…";
-  }
-  return text;
-}
+      let text = `【基础信息】\n名称：${draftRole?.name || ""}\n年龄：${draftRole?.age || ""}\n身高：${draftRole?.height || ""}cm\n性别：${draftRole?.sex || ""}\n\n【形象设定】\n` +
+        base.join("");
 
-$("#btnAutoGenerate").addEventListener("click", () => {
-  const t = generateProfileText();
-  $("#roleProfile").value = t;
-});
-
-$("#btnConfirmRole").addEventListener("click", () => {
-  if(!draftRole){
-    alert("草稿不存在。");
-    return;
-  }
-  const profile = ($("#roleProfile").value || "").trim();
-  if(!profile){
-    alert("形象资料为空。你可以点击“完成”自动生成，或手动填写。");
-    return;
-  }
-  draftRole.profile = profile;
-
-  const roles = loadRoles();
-  roles.unshift(draftRole);
-  saveRoles(roles);
-
-  draftRole = null;
-  showScreen("screen-role-1");
-  renderRoles();
-});
-
-/* ---------- Init ---------- */
-async function init(){
-  // Themes
-  refreshThemeSelect();
-  applyActiveTheme();
-
-  // Fonts
-  for(const f of CDN_FONTS) if(f.css) ensureCssLink(f.css);
-  await loadUploadedFontsIntoSelect();
-  const activeFont = localStorage.getItem(LS.activeFont);
-  if(activeFont){
-    try{ await applyFontById(activeFont); }catch{ /* ignore */ }
-  }
-
-  // Background
-  const bgBlob = await idbGet("bg:image");
-  if(bgBlob) await applyBackgroundFromBlob(bgBlob);
-
-  // API configs
-  refreshCfgSelect();
-  const activeCfgId = localStorage.getItem(LS.activeCfgId);
-  if(activeCfgId){
-    const cfg = loadApiConfigs().find(c => c.id === activeCfgId);
-    if(cfg){
-      $("#cfgName").value = cfg.name || "";
-      $("#cfgBaseUrl").value = cfg.baseUrl || "";
-      $("#cfgApiKey").value = cfg.apiKey || "";
+      const filler = [
+        "她偏爱简洁的配色与细节克制的装饰，给人温柔但有边界的印象。",
+        "她的站姿很稳，走路时步幅不大，却有明确的目的感。",
+        "她不需要夸张的装饰来证明存在感，反而越素越显得高级。",
+        "她与人相处时保持礼貌距离，但一旦信任就会表现出很细腻的体贴。",
+      ];
+      while(text.length < target){
+        text += filler[Math.floor(Math.random()*filler.length)];
+      }
+      if(text.length > target + 80){
+        text = text.slice(0, target + 60) + "…";
+      }
+      return text;
     }
-  }
 
-  // Initial model select placeholder
-  $("#cfgModel").innerHTML = `<option value="">（先抓取模型）</option>`;
-}
-init();
+    $("#btnAutoGenerate").addEventListener("click", () => {
+      $("#roleProfile").value = generateProfileText();
+    });
+
+    $("#btnConfirmRole").addEventListener("click", () => {
+      if(!draftRole){ alert("草稿不存在。"); return; }
+      const profile = ($("#roleProfile").value || "").trim();
+      if(!profile){ alert("形象资料为空。点击“完成”生成，或手动填写。"); return; }
+      draftRole.profile = profile;
+
+      const roles = loadRoles();
+      roles.unshift(draftRole);
+      saveRoles(roles);
+
+      draftRole = null;
+      showScreen("screen-role-1");
+      renderRoles();
+    });
+
+    /* ---------- Init ---------- */
+    async function init(){
+      // Load theme
+      refreshThemeSelect();
+      applyActiveTheme();
+
+      // Font links
+      for(const f of CDN_FONTS) if(f.css) ensureCssLink(f.css);
+
+      // Uploaded fonts + active font
+      await loadUploadedFontsIntoSelect();
+      const activeFont = localStorage.getItem(LS.activeFont);
+      if(activeFont){
+        try{ await applyFontById(activeFont); }catch{}
+      } else {
+        setUIFontStack(CDN_FONTS[0].stack);
+      }
+
+      // Background
+      const bgBlob = await idbGet("bg:image");
+      if(bgBlob) await applyBackgroundFromBlob(bgBlob);
+
+      // API
+      refreshCfgSelect();
+      const activeCfgId = localStorage.getItem(LS.activeCfgId);
+      if(activeCfgId){
+        const cfg = loadApiConfigs().find(c => c.id === activeCfgId);
+        if(cfg){
+          $("#cfgName").value = cfg.name || "";
+          $("#cfgBaseUrl").value = cfg.baseUrl || "";
+          $("#cfgApiKey").value = cfg.apiKey || "";
+        }
+      }
+      $("#cfgModel").innerHTML = `<option value="">（先抓取模型）</option>`;
+    }
+    init();
+  </script>
+</body>
+</html>
